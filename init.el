@@ -55,19 +55,5 @@
   (dired-kill-when-opening-new-dired-buffer t))
 ;;; Popups
 
-(use-package popper
-  :init
-  (setq popper-reference-buffers
-        '("\\*Messages\\*"
-          "\\*Warnings\\*"
-          "\\*Man "              ; man pages
-          help-mode
-          compilation-mode
-          grep-mode)
-        popper-display-function #'univ/popper-top
-        Man-notify-method 'aggressive)   ; focus man pages when they open
-  (popper-mode 1)
-  (popper-echo-mode 1))   ; list open popups in the echo area
-
 ;; Keys that override everything; must load after evil
 (load (locate-user-emacs-file "universal") nil t)
