@@ -1,0 +1,9 @@
+elpa/
+eln-cache/
+auto-save/
+tree-sitter/
+transient/
+*.elc
+custom.el
+history
+recentf
