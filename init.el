@@ -41,3 +41,33 @@
   :config
   (setq evil-collection-mode-list '(dired))
   (evil-collection-init))
+
+;;; Windows
+(use-package window
+  :ensure nil
+  :preface
+  (defun my/spawn-window ()
+    "Split to the right and open dired in the new window."
+    (interactive)
+    (select-window (split-window-right))
+    (dired default-directory))
+  :custom
+  (window-combination-resize t)
+  :bind
+  ("M-RET" . my/spawn-window))
+
+;;; Dired
+(use-package dired
+  :ensure nil
+  :custom
+  (dired-kill-when-opening-new-dired-buffer t))
+
+;;; Zoom
+(use-package face-remap
+  :ensure nil
+  :preface
+  (defun my/zoom-reset () (interactive) (text-scale-set 0))
+  :bind
+  (("C-=" . text-scale-increase)
+   ("C--" . text-scale-decrease)
+   ("C-0" . my/zoom-reset)))
