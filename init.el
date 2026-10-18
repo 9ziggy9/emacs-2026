@@ -77,7 +77,8 @@
   (c-ts-mode . electric-pair-local-mode))
 
 ;;; Popups
-(load (locate-user-emacs-file "popup") nil t)
+(load (locate-user-emacs-file "popup") nil t)  ;; API
+(load (locate-user-emacs-file "popups") nil t) ;; Implementations
 
 ;; Keys that override everything; must load after evil
 (load (locate-user-emacs-file "universal") nil t)
