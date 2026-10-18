@@ -52,9 +52,7 @@
     (select-window (split-window-right))
     (dired default-directory))
   :custom
-  (window-combination-resize t)
-  :bind
-  ("M-RET" . my/spawn-window))
+  (window-combination-resize t))
 
 ;;; Dired
 (use-package dired
@@ -71,3 +69,25 @@
   (("C-=" . text-scale-increase)
    ("C--" . text-scale-decrease)
    ("C-0" . my/zoom-reset)))
+
+;;; Priority keys: beat every mode map and evil state
+(defvar-keymap my-keys-map
+  "C-h"   #'windmove-left
+  "C-j"   #'windmove-down
+  "C-k"   #'windmove-up
+  "C-l"   #'windmove-right
+  "C-S-h" #'windmove-swap-states-left
+  "C-S-j" #'windmove-swap-states-down
+  "C-S-k" #'windmove-swap-states-up
+  "C-S-l" #'windmove-swap-states-right
+  "C-q"   #'delete-window
+  "C-RET" #'my/spawn-window)
+
+(define-minor-mode my-keys-mode
+  "Global keys that take priority over all other keymaps."
+  :global t
+  :keymap my-keys-map)
+
+(my-keys-mode 1)
+(add-to-list 'emulation-mode-map-alists
+             `((my-keys-mode . ,my-keys-map)))
