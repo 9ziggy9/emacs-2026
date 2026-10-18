@@ -110,7 +110,7 @@ The prompt starts with the last command, so C-<return> twice reruns it."
 (pop/define dired
   :match   (derived-mode-p 'dired-mode)
   :open    #'pop/dired-here
-  :size    (0.5 . 0.6)
+  :size    (0.8 . 0.8)
   :keys    ("RET"        pop/dired-find-file
             "C-<return>" pop/dired-open-in-split
             "q"          pop/hide))

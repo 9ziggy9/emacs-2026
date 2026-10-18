@@ -233,7 +233,8 @@
 (defun pop/kept-universal-keys (type)
   "Universal keys TYPE keeps: those running pop/ commands, plus :keep."
   (let ((kept (make-sparse-keymap))
-        (extra (mapcar #'key-parse (pop/prop type :keep))))
+        (extra (mapcar #'key-parse (append pop/always-keep
+                                           (pop/prop type :keep)))))
     (when (boundp 'univ-keys-map)
       (map-keymap
        (lambda (event cmd)
