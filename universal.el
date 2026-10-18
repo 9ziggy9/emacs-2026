@@ -29,6 +29,7 @@
   "C-0"   #'univ/zoom-reset
   ;; Popups
   "C-c"   #'pop/compile-toggle
+  "C-/"   #'pop/dired-toggle
   )
 
 (define-minor-mode univ-keys-mode
