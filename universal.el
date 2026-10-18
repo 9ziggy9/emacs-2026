@@ -21,12 +21,14 @@
   "C-S-j" #'windmove-swap-states-down
   "C-S-k" #'windmove-swap-states-up
   "C-S-l" #'windmove-swap-states-right
-  "C-x"   #'delete-window
+  "C-x"   #'pop/close-or-delete-window
   "C-<return>" #'univ/spawn-window
   ;; Zoom
   "C-="   #'text-scale-increase
   "C--"   #'text-scale-decrease
   "C-0"   #'univ/zoom-reset
+  ;; Popups
+  "C-c"   #'pop/compile-toggle
   )
 
 (define-minor-mode univ-keys-mode

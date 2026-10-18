@@ -6,4 +6,4 @@ transient/
 *.elc
 custom.el
 history
-recentf
+recentftest

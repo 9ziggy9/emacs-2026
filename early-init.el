@@ -15,4 +15,6 @@
 
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("gnu"   . "https://elpa.gnu.org/packages/"))
-      load-prefer-newer t)
+      load-prefer-newer t
+      warning-suppress-types '((files missing-lexbind-cookie))
+      native-comp-async-report-warnings-errors 'silent)

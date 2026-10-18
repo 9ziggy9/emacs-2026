@@ -23,6 +23,11 @@
 (setq display-line-numbers-type 'relative)
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
+;;; Theme
+(use-package railscasts-reloaded-theme
+  :config
+  (load-theme 'railscasts-reloaded t))
+
 ;;; Evil
 (use-package evil
   :init
@@ -53,7 +58,26 @@
   :ensure nil
   :custom
   (dired-kill-when-opening-new-dired-buffer t))
+
+;; LANGS
+(use-package c-ts-mode
+  :ensure nil
+  :init
+  ;; Use the tree-sitter modes for .c and .h files
+  (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
+  (add-to-list 'major-mode-remap-alist '(c-or-c++-mode . c-or-c++-ts-mode))
+  :config
+  ;; Where to fetch the C grammar from
+  (add-to-list 'treesit-language-source-alist
+               '(c "https://github.com/tree-sitter/tree-sitter-c"))
+  :custom
+  (c-ts-mode-indent-offset 2)
+  (c-ts-mode-indent-style 'k&r)
+  :hook
+  (c-ts-mode . electric-pair-local-mode))
+
 ;;; Popups
+(load (locate-user-emacs-file "popup") nil t)
 
 ;; Keys that override everything; must load after evil
 (load (locate-user-emacs-file "universal") nil t)
