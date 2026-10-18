@@ -1,3 +1,5 @@
+;;; init.el --- -*- lexical-binding: t -*-
+
 ;; UI cleanup, no-litter settings, custom-file
 (load (locate-user-emacs-file "clean") nil t)
 

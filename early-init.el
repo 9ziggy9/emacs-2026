@@ -1,3 +1,5 @@
+;;; early-init.el --- -*- lexical-binding: t -*-
+
 ;; Set before the first frame exists: no bar flash, no font resize jump
 (setq default-frame-alist
       '((menu-bar-lines . 0)

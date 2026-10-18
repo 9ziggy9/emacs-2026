@@ -1,3 +1,5 @@
+;;; clean.el --- -*- lexical-binding: t -*-
+
 ;; Minimal UI improvements
 (setq inhibit-startup-screen t)
 (setq initial-scratch-message nil)
