@@ -22,3 +22,22 @@
 ;; Line numbers
 (setq display-line-numbers-type 'relative)
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
+
+;;; Evil
+(use-package evil
+  :init
+  ;; These must be set before evil loads
+  (setq evil-want-keybinding nil      ; leave other modes' maps alone
+        evil-want-C-u-scroll t        ; C-u scrolls up, like vim
+        evil-want-Y-yank-to-eol t     ; Y behaves like y$
+        evil-undo-system 'undo-redo   ; built-in redo for C-r
+        evil-split-window-below t     ; :sp opens below
+        evil-vsplit-window-right t)   ; :vs opens right
+  :config
+  (evil-mode 1))
+
+(use-package evil-collection
+  :after evil
+  :config
+  (setq evil-collection-mode-list '(dired))
+  (evil-collection-init))
