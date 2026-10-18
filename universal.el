@@ -11,6 +11,20 @@
   (interactive)
   (text-scale-set 0))
 
+(defun univ/popper-center (buffer alist)
+  "Show popups in a centered floating frame, half the size of the main one."
+  (display-buffer-in-child-frame
+   buffer
+   (append alist
+           '((child-frame-parameters
+              . ((left . 0.25) (top . 0.25)       ; centered
+                 (width . 0.5) (height . 0.5)     ; 50% of the frame
+                 (keep-ratio . t)                 ; follow frame resizes
+                 (minibuffer . nil)               ; use the main minibuffer
+                 (unsplittable . t)
+                 (no-other-frame . t)
+                 (child-frame-border-width . 2)))))))
+
 (defvar-keymap univ-keys-map
   ;; Windows
   "C-h"   #'windmove-left
@@ -26,7 +40,12 @@
   ;; Zoom
   "C-="   #'text-scale-increase
   "C--"   #'text-scale-decrease
-  "C-0"   #'univ/zoom-reset)
+  "C-0"   #'univ/zoom-reset
+  ;; Popups
+  "C-'"   #'popper-toggle        ; show/hide the dropdown
+  "M-'"   #'popper-cycle         ; next popup buffer
+  "C-M-'" #'popper-toggle-type   ; promote a popup to a normal window, or back
+  )
 
 (define-minor-mode univ-keys-mode
   "Global keys that take priority over all other keymaps."
