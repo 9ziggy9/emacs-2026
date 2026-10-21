@@ -57,12 +57,36 @@
 (use-package dired
   :ensure nil
   :custom
-  (dired-kill-when-opening-new-dired-buffer t))
+  (dired-kill-when-opening-new-dired-buffer t)
+  :config
+  (evil-define-key 'normal dired-mode-map
+    "=" #'dired-create-empty-file     ; the +/= key on its own
+    "+" #'dired-create-directory))    ; with Shift
 
 (use-package ibuffer
   :ensure nil
   :custom
-  (setq ibuffer-expert t))
+  (ibuffer-expert t))
+
+;;; Completion: fzf-style fuzzy finding in the minibuffer
+(use-package vertico              ; vertical candidate list
+  :init (vertico-mode 1)
+  :custom (vertico-cycle t)
+  :bind (:map vertico-map
+         ("C-j" . vertico-next)
+         ("C-k" . vertico-previous)))
+
+(use-package orderless            ; fzf-like matching
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion))))
+  ;; Each space-separated term matches literally, as a regexp, or
+  ;; fuzzily (letters in order, like fzf); terms can come in any order
+  (orderless-matching-styles '(orderless-literal orderless-regexp orderless-flex)))
+
+(use-package consult              ; buffer switcher and searches
+  :init
+  (recentf-mode 1))               ; lets consult-buffer offer recent files too
 
 ;; LANGS
 (use-package c-ts-mode
