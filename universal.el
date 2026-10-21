@@ -30,6 +30,8 @@
   ;; Popups
   "C-c"   #'pop/compile-toggle
   "C-/"   #'pop/dired-toggle
+  ;; Buffer management
+  "C-b"   #'pop/ibuffer-toggle
   )
 
 (define-minor-mode univ-keys-mode

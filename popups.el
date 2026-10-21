@@ -115,4 +115,42 @@ The prompt starts with the last command, so C-<return> twice reruns it."
             "C-<return>" pop/dired-open-in-split
             "q"          pop/hide))
 
+;;;; Ibuffer
+
+(declare-function ibuffer "ibuffer")
+(declare-function ibuffer-update "ibuffer")
+(declare-function ibuffer-current-buffer "ibuffer")
+(declare-function ibuffer-jump-to-buffer "ibuffer")
+
+(defun pop/ibuffer-here ()
+  "A fresh ibuffer list, with the cursor on the buffer you came from."
+  (let ((main (pop/main-buffer)))
+    (save-window-excursion (ibuffer nil "*Ibuffer*" nil t))
+    (with-current-buffer "*Ibuffer*"
+      (ibuffer-update nil t)
+      (ignore-errors (ibuffer-jump-to-buffer (buffer-name main)))
+      (current-buffer))))
+
+(defun pop/ibuffer-visit ()
+  "Hide the popup and show the buffer at point in the main window."
+  (interactive)
+  (let ((buf (ibuffer-current-buffer t)))
+    (pop/hide)
+    (switch-to-buffer buf)))
+
+(defun pop/ibuffer-visit-in-split ()
+  "Hide the popup and show the buffer at point in a new split."
+  (interactive)
+  (let ((buf (ibuffer-current-buffer t)))
+    (pop/hide)
+    (select-window (split-window-right))
+    (switch-to-buffer buf)))
+
+(pop/define ibuffer
+  :match   (derived-mode-p 'ibuffer-mode)
+  :open    #'pop/ibuffer-here
+  :keys    ("RET"        pop/ibuffer-visit
+            "C-<return>" pop/ibuffer-visit-in-split
+            "q"          pop/hide))
+
 (provide 'popups)

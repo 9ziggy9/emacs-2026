@@ -49,6 +49,22 @@
 (defun pop/prop (name prop)
   (plist-get (alist-get name pop/types) prop))
 
+(defconst pop/key-aliases
+  '(("RET" . "<return>") ("TAB" . "<tab>")
+    ("DEL" . "<backspace>") ("ESC" . "<escape>"))
+  "Keys a GUI sends as a function key first, e.g. Return arrives as <return>.
+Emacs only falls back to RET when nothing binds <return>, and packages
+like evil-collection do bind it, so popup keys are bound under both.")
+
+(defun pop/make-keys-map (pairs)
+  "Keymap from PAIRS (KEY COMMAND ...), also binding each key's GUI alias."
+  (let ((map (make-sparse-keymap)))
+    (cl-loop for (key cmd) on pairs by #'cddr
+             do (keymap-set map key cmd)
+                (when-let* ((alias (cdr (assoc key pop/key-aliases))))
+                  (keymap-set map alias cmd)))
+    map))
+
 (defmacro pop/define (name &rest props)
   "Define a popup type NAME and a `pop/NAME-toggle' command for it.
 
@@ -66,9 +82,9 @@
         (keys (plist-get props :keys)))
     `(progn
        (defvar ,map nil)
-       (setq ,map (define-keymap
-                    ,@(cl-loop for (key cmd) on keys by #'cddr
-                               append (list key `#',cmd))))
+       (setq ,map (pop/make-keys-map
+                   (list ,@(cl-loop for (key cmd) on keys by #'cddr
+                                    append (list key `#',cmd)))))
        (pop/register
         ',name
         (list :match (lambda () ,(plist-get props :match))
@@ -159,6 +175,9 @@
         (type (pop/type-of buffer)))
     (when type (pop/resize type))
     (prog1 (window--display-buffer buffer win 'reuse alist)
+      ;; Start where the buffer's cursor is, not where the popup last was,
+      ;; so an :open function can position the cursor before showing
+      (set-window-point win (with-current-buffer buffer (point)))
       (set-window-parameter win 'mode-line-format 'none)
       ;; Every split attempt (C-<return>, :sp, :vs...) asks the window's
       ;; `split-window' parameter first; refuse them all in the popup

@@ -44,7 +44,7 @@
 (use-package evil-collection
   :after evil
   :config
-  (setq evil-collection-mode-list '(dired))
+  (setq evil-collection-mode-list '(dired ibuffer))
   (evil-collection-init))
 
 ;;; Windows
@@ -58,6 +58,11 @@
   :ensure nil
   :custom
   (dired-kill-when-opening-new-dired-buffer t))
+
+(use-package ibuffer
+  :ensure nil
+  :custom
+  (setq ibuffer-expert t))
 
 ;; LANGS
 (use-package c-ts-mode
