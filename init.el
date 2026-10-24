@@ -44,7 +44,7 @@
 (use-package evil-collection
   :after evil
   :config
-  (setq evil-collection-mode-list '(dired ibuffer))
+  (setq evil-collection-mode-list '(dired ibuffer corfu))
   (evil-collection-init))
 
 ;;; Windows
@@ -104,6 +104,15 @@
   (c-ts-mode-indent-style 'k&r)
   :hook
   (c-ts-mode . electric-pair-local-mode))
+
+;;; Autocompletion: a popup of candidates as you type
+(use-package corfu
+  :init (global-corfu-mode 1)
+  :custom
+  (corfu-auto t)             ; show candidates automatically while typing
+  (corfu-auto-prefix 2)      ; ...after 3 characters
+  (corfu-auto-delay 0.4)     ; ...and a short pause
+  (corfu-cycle t))           ; wrap around at the ends of the list
 
 (use-package eldoc
   :ensure nil

@@ -12,9 +12,14 @@
   (text-scale-set 0))
 
 (defun univ/outside-minibuffer (command)
-  "A binding for COMMAND that steps aside in the minibuffer.
-Lets keys like C-j/C-k move through completion candidates there."
-  `(menu-item "" ,command :filter ,(lambda (cmd) (unless (minibufferp) cmd))))
+  "A binding for COMMAND that steps aside while completing.
+That is, in the minibuffer and while an autocompletion popup is up,
+so keys like C-j/C-k move through candidates there instead."
+  `(menu-item "" ,command
+              :filter ,(lambda (cmd)
+                         (unless (or (minibufferp)
+                                     (bound-and-true-p completion-in-region-mode))
+                           cmd))))
 
 (defvar-keymap univ-search-map
   :doc "M-s: search."
