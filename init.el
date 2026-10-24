@@ -88,6 +88,9 @@
   :init
   (recentf-mode 1))               ; lets consult-buffer offer recent files too
 
+(use-package consult-eglot              ; project-wide symbols, via clangd
+  :after (consult eglot))
+
 ;; LANGS
 (use-package c-ts-mode
   :ensure nil

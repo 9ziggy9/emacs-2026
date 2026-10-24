@@ -45,6 +45,8 @@ so keys like C-j/C-k move through candidates there instead."
   :doc "M-s: search."
   "M-f" #'find-file       ; a file, anywhere in the project
   "M-d" #'consult-line            ; text in this document
+  "M-i" #'consult-imenu           ; search defined fns
+  "M-I" #'consult-eglot-symbols   ; search project symbols
   "M-p" #'consult-ripgrep)        ; text anywhere in the project
 
 (defvar-keymap univ-keys-map
