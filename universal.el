@@ -18,7 +18,7 @@ Lets keys like C-j/C-k move through completion candidates there."
 
 (defvar-keymap univ-search-map
   :doc "M-s: search."
-  "M-f" #'project-find-file       ; a file, anywhere in the project
+  "M-f" #'find-file       ; a file, anywhere in the project
   "M-d" #'consult-line            ; text in this document
   "M-p" #'consult-ripgrep)        ; text anywhere in the project
 

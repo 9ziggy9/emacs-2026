@@ -105,6 +105,14 @@
   :hook
   (c-ts-mode . electric-pair-local-mode))
 
+(use-package eglot
+  :ensure nil
+  :hook (c-ts-mode . eglot-ensure)     ; start clangd in every C buffer
+  :custom
+  (eglot-inlay-hints-mode -1)
+  (eglot-autoshutdown t)               ; stop it when the last C buffer closes
+  (eglot-extend-to-xref t))            ; headers you jump into reuse that clangd
+
 ;;; Popups
 (load (locate-user-emacs-file "popup") nil t)  ;; API
 (load (locate-user-emacs-file "popups") nil t) ;; Implementations
