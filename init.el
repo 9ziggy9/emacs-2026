@@ -105,11 +105,20 @@
   :hook
   (c-ts-mode . electric-pair-local-mode))
 
+(use-package eldoc
+  :ensure nil
+  :custom
+  (eldoc-idle-delay 0.2)                 ; pause before docs appear (default 0.5)
+  (eldoc-echo-area-use-multiline-p t)    ; let the echo area grow to fit
+  (eldoc-echo-area-prefer-doc-buffer t)) ; if *eldoc* is open, show docs there instead
+
 (use-package eglot
   :ensure nil
   :hook (c-ts-mode . eglot-ensure)     ; start clangd in every C buffer
+  :init
+  (setq eglot-stay-out-of '(eldoc))    ; keep eglot out of the echo area
   :custom
-  (eglot-inlay-hints-mode -1)
+  (eglot-ignored-server-capabilities '(:inlayHintProvider)) ; no inline hints
   (eglot-autoshutdown t)               ; stop it when the last C buffer closes
   (eglot-extend-to-xref t))            ; headers you jump into reuse that clangd
 
