@@ -44,7 +44,7 @@
 (use-package evil-collection
   :after evil
   :config
-  (setq evil-collection-mode-list '(dired ibuffer corfu))
+  (setq evil-collection-mode-list '(dired ibuffer corfu helpful))
   (evil-collection-init))
 
 ;;; Windows
@@ -113,6 +113,28 @@
   (corfu-auto-prefix 2)      ; ...after 3 characters
   (corfu-auto-delay 0.4)     ; ...and a short pause
   (corfu-cycle t))           ; wrap around at the ends of the list
+
+;;; Command log: a live side buffer of every key and the command it ran
+(use-package command-log-mode
+  :commands clm/toggle-command-log-buffer
+  :custom
+  (command-log-mode-key-binding-open-log nil)   ; don't grab C-c o
+  (command-log-mode-open-log-turns-on-mode t)   ; opening the log starts logging
+  (command-log-mode-is-global t))               ; ...in every buffer
+
+;;; Key hints: pause after a prefix to see what can follow it
+(use-package which-key
+  :ensure nil                          ; built in since Emacs 30
+  :init (which-key-mode 1))
+
+;;; Richer help buffers (source, references, keybindings)
+(use-package helpful
+  :bind
+  (([remap describe-function] . helpful-callable)
+   ([remap describe-variable] . helpful-variable)
+   ([remap describe-command]  . helpful-command)
+   ([remap describe-key]      . helpful-key)
+   ([remap describe-symbol]   . helpful-symbol)))
 
 (use-package eldoc
   :ensure nil

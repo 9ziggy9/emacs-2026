@@ -21,6 +21,26 @@ so keys like C-j/C-k move through candidates there instead."
                                      (bound-and-true-p completion-in-region-mode))
                            cmd))))
 
+(defun univ/grow-window ()
+  "Make the current window wider."
+  (interactive)
+  (enlarge-window-horizontally 4))
+
+(defun univ/shrink-window ()
+  "Make the current window narrower."
+  (interactive)
+  (shrink-window-horizontally 4))
+
+(defun univ/grow-window-tall ()
+  "Make the current window taller."
+  (interactive)
+  (enlarge-window 2))
+
+(defun univ/shrink-window-tall ()
+  "Make the current window shorter."
+  (interactive)
+  (shrink-window 2))
+
 (defvar-keymap univ-search-map
   :doc "M-s: search."
   "M-f" #'find-file       ; a file, anywhere in the project
@@ -37,6 +57,11 @@ so keys like C-j/C-k move through candidates there instead."
   "C-S-j" #'windmove-swap-states-down
   "C-S-k" #'windmove-swap-states-up
   "C-S-l" #'windmove-swap-states-right
+  "C-]"   #'window-layout-transpose  ; side-by-side <-> stacked
+  "C-<right>" (univ/outside-minibuffer #'univ/grow-window)
+  "C-<left>"  (univ/outside-minibuffer #'univ/shrink-window)
+  "C-<up>"    (univ/outside-minibuffer #'univ/grow-window-tall)
+  "C-<down>"  (univ/outside-minibuffer #'univ/shrink-window-tall)
   "C-x"   #'pop/close-or-delete-window
   "C-<return>" #'univ/spawn-window
   ;; Zoom
