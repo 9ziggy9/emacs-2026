@@ -5,7 +5,8 @@
 ;; content and size.  While a popup has focus, keys are looked up in this
 ;; order:
 ;;
-;;   1. the popup type's own :keys (beats everything, evil included)
+;;   1. the popup type's own :keys (beats everything, evil included),
+;;      then `pop/common-map', keys every popup shares (e.g. escape)
 ;;   2. your universal keys, unless the type is isolated (the default);
 ;;      isolated popups keep only universal keys bound to pop/ commands
 ;;      plus any listed in :keep
@@ -26,6 +27,10 @@
 
 (defvar pop/always-keep '("C-=" "C--" "C-0")
   "Universal keys every popup keeps, even isolated ones (zoom).")
+
+(defvar-keymap pop/common-map
+  :doc "Keys every popup gets; a type's own :keys override these."
+  "<escape>" #'pop/escape)
 
 (defvar-keymap pop/minibuffer-map
   :doc "Keys in the popup's minibuffer."
@@ -215,6 +220,13 @@ like evil-collection do bind it, so popup keys are bound under both.")
       (select-frame-set-input-focus parent)
       (pop/update-keys))))
 
+(defun pop/escape ()
+  "Back out of insert/visual state first; from normal state, hide the popup."
+  (interactive)
+  (if (memq (bound-and-true-p evil-state) '(insert visual replace operator))
+      (evil-force-normal-state)
+    (pop/hide)))
+
 (defun pop/toggle (type)
   "Hide the popup if it's showing TYPE; otherwise show TYPE."
   (if (and (pop/visible-p) (eq (pop/current-type) type))
@@ -269,6 +281,7 @@ like evil-collection do bind it, so popup keys are bound under both.")
       (setf (alist-get type pop/full-maps)
             (make-composed-keymap
              (list (pop/prop type :map)
+                   pop/common-map
                    (if (pop/prop type :isolate)
                        (pop/kept-universal-keys type)
                      (make-sparse-keymap)))))))
