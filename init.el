@@ -123,69 +123,7 @@
   (c-ts-mode-indent-offset 2)
   (c-ts-mode-indent-style 'k&r)
   :hook
-  (c-ts-mode . electric-pair-local-mode)
-  (c-ts-mode . my/c-mode-line))
-
-(defun my/c-mode-line ()
-  "Strip the mode line down to the evil state, file name and a modes button."
-  (setq-local mode-line-format
-              '(" " (:eval (my/evil-state-tag))
-                " " mode-line-buffer-identification
-                mode-line-format-right-align
-                (:eval (my/mode-line-modes-button)) " ")))
-
-;; Evil state badges: each borrows a font-lock color, inverted into a pill,
-;; so they follow whatever theme is loaded
-(defface my/evil-base     '((t :inverse-video t :weight bold :height 0.85)) "")
-(defface my/evil-normal   '((t :inherit (my/evil-base font-lock-keyword-face)))  "")
-(defface my/evil-insert   '((t :inherit (my/evil-base font-lock-string-face)))   "")
-(defface my/evil-visual   '((t :inherit (my/evil-base font-lock-constant-face))) "")
-(defface my/evil-replace  '((t :inherit (my/evil-base font-lock-warning-face)))  "")
-(defface my/evil-operator '((t :inherit (my/evil-base font-lock-type-face)))     "")
-(defface my/evil-other    '((t :inherit (my/evil-base font-lock-comment-face)))  "")
-
-;; Modes button: shows the major mode and how many minor modes are on;
-;; clicking it lists them in the minibuffer, and picking one opens its help
-(defun my/mode-line-modes-button ()
-  "The major mode name and minor-mode count, clickable."
-  (propertize (format "%s +%d" (format-mode-line mode-name)
-                      (length (my/enabled-minor-modes)))
-              'mouse-face 'mode-line-highlight
-              'help-echo "mouse-1: list enabled modes"
-              'local-map (let ((map (make-sparse-keymap)))
-                           (keymap-set map "<mode-line> <mouse-1>"
-                                       #'my/mode-line-modes-menu)
-                           map)))
-
-(defun my/enabled-minor-modes ()
-  "Minor modes on in the current buffer, local and global, sorted."
-  (sort (seq-uniq (append local-minor-modes global-minor-modes))))
-
-(defun my/mode-line-modes-menu (event)
-  "List the enabled modes of the clicked window's buffer; open help on one."
-  (interactive "e")
-  (let* ((modes (with-selected-window (posn-window (event-start event))
-                  (cons major-mode (my/enabled-minor-modes))))
-         (names (mapcar #'symbol-name modes))
-         ;; Keep the major mode first and the rest alphabetical
-         (table (lambda (str pred action)
-                  (if (eq action 'metadata)
-                      '(metadata (display-sort-function . identity))
-                    (complete-with-action action names str pred)))))
-    (describe-function
-     (intern (completing-read "Enabled modes: " table nil t)))))
-
-(defun my/evil-state-tag ()
-  "The current evil state as a colored badge, e.g. \" INSERT \"."
-  (when (bound-and-true-p evil-state)
-    (propertize (format " %s " (upcase (symbol-name evil-state)))
-                'face (pcase evil-state
-                        ('normal   'my/evil-normal)
-                        ('insert   'my/evil-insert)
-                        ('visual   'my/evil-visual)
-                        ('replace  'my/evil-replace)
-                        ('operator 'my/evil-operator)
-                        (_         'my/evil-other)))))
+  (c-ts-mode . electric-pair-local-mode))
 
 ;;; Autocompletion: a popup of candidates as you type
 (use-package corfu
@@ -247,3 +185,6 @@
 
 ;; Keys that override everything; must load after evil
 (load (locate-user-emacs-file "universal") nil t)
+
+;; Mode line, with F-key slots; must load after universal
+(load (locate-user-emacs-file "modeline") nil t)

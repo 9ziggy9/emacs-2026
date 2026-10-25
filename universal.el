@@ -70,16 +70,12 @@ so keys like C-j/C-k move through candidates there instead."
   "C-="   #'text-scale-increase
   "C--"   #'text-scale-decrease
   "C-0"   #'univ/zoom-reset
-  ;; Popups
-  "C-c"   #'pop/compile-toggle
-  "C-/"   #'pop/dired-toggle
-  ;; Buffer management
-  "C-b"   #'pop/ibuffer-toggle
   ;; Searching
   "M-s"   univ-search-map ; M-s M-f file, M-s M-d document, M-s M-p project
   )
 
 ;; Escape cancels any prompt immediately (popups handle it in popup.el)
+;; Popups are on F-keys; see modeline.el
 (keymap-set minibuffer-local-map "<escape>" #'abort-minibuffers)
 
 (define-minor-mode univ-keys-mode
