@@ -373,4 +373,31 @@ The prompt starts with the last command, so C-<return> twice reruns it."
              "esc/q" "close"
              "C-x" "close and kill buffer")))
 
+;;;; Scratchpad
+
+;; The *scratch* buffer, for notes and trying out elisp; escape leaves
+;; insert state first, then closes
+
+(pop/define scratch
+  :match (equal (buffer-name) "*scratch*")
+  :open  #'get-scratch-buffer-create)
+
+;;;; README
+
+;; README.org at the root of the git repo you're in (wherever .git is),
+;; created on first save if there isn't one
+
+(defun pop/readme-here ()
+  "The README.org buffer for the main buffer's git repo."
+  (let* ((dir (buffer-local-value 'default-directory (pop/main-buffer)))
+         (root (or (locate-dominating-file dir ".git")
+                   (user-error "Not in a git repo: no .git above %s"
+                               (abbreviate-file-name dir)))))
+    (find-file-noselect (expand-file-name "README.org" root))))
+
+(pop/define readme
+  :match (and buffer-file-name
+              (equal (file-name-nondirectory buffer-file-name) "README.org"))
+  :open  #'pop/readme-here)
+
 (provide 'popups)

@@ -14,7 +14,9 @@
 (defvar ml/default-slots
   '(("compile" . pop/compile-toggle)
     ("dired"   . pop/dired-toggle)
-    ("ibuffer" . pop/ibuffer-toggle))
+    ("ibuffer" . pop/ibuffer-toggle)
+    ("tree"    . univ/toggle-treemacs)
+    ("readme"  . pop/readme-toggle))
   "Slots (LABEL . COMMAND) for modes without their own; the first is F1.
 A nil entry leaves that slot empty.")
 
@@ -69,6 +71,18 @@ Its SLOTS replace `ml/default-slots', e.g.
 (ml/update-slots-band)
 (add-hook 'enable-theme-functions #'ml/update-slots-band)
 
+;; A slimmer bar: smaller text makes the whole line thinner.  Themes reset
+;; the mode-line faces when they load, so redo it after each one.
+(defvar ml/height 0.85 "Mode-line text size, relative to buffer text.")
+
+(defun ml/shrink-mode-line (&rest _)
+  "Apply `ml/height' to the mode-line faces."
+  (dolist (face '(mode-line mode-line-inactive))
+    (set-face-attribute face nil :height ml/height)))
+
+(ml/shrink-mode-line)
+(add-hook 'enable-theme-functions #'ml/shrink-mode-line)
+
 (defun ml/click-map (command)
   "A mode-line keymap running COMMAND on mouse-1."
   (let ((map (make-sparse-keymap)))
@@ -92,35 +106,50 @@ Its SLOTS replace `ml/default-slots', e.g.
       pad)
      pad)))
 
-;; Evil state badges: each borrows a font-lock color, inverted into a pill,
-;; so they follow whatever theme is loaded
-(defface ml/evil-base     '((t :inverse-video t :weight bold :height 0.85)) "")
-(defface ml/evil-normal   '((t :inherit (ml/evil-base font-lock-keyword-face)))  "")
-(defface ml/evil-insert   '((t :inherit (ml/evil-base font-lock-string-face)))   "")
-(defface ml/evil-visual   '((t :inherit (ml/evil-base font-lock-constant-face))) "")
-(defface ml/evil-replace  '((t :inherit (ml/evil-base font-lock-warning-face)))  "")
-(defface ml/evil-operator '((t :inherit (ml/evil-base font-lock-type-face)))     "")
-(defface ml/evil-other    '((t :inherit (ml/evil-base font-lock-comment-face)))  "")
+;; Unsaved changes: a dot after the file name
+(defun ml/modified-marker ()
+  "\" ●\" while a file-visiting buffer has unsaved changes."
+  (when (and buffer-file-name (buffer-modified-p))
+    (propertize " ●" 'face 'warning)))
 
-(defun ml/evil-state-tag ()
-  "The current evil state as a colored badge, e.g. \" INSERT \"."
-  (when (bound-and-true-p evil-state)
-    (propertize (format " %s " (upcase (symbol-name evil-state)))
-                'face (pcase evil-state
-                        ('normal   'ml/evil-normal)
-                        ('insert   'ml/evil-insert)
-                        ('visual   'ml/evil-visual)
-                        ('replace  'ml/evil-replace)
-                        ('operator 'ml/evil-operator)
-                        (_         'ml/evil-other)))))
+;; Git branch, from vc-mode's " Git-main" / " Git:main"
+(defvar vc-mode)
+
+(defun ml/git-branch ()
+  "The current git branch, dimmed, e.g. \"    main\"."
+  (when (and vc-mode (string-match "Git[-:!?@]\\(.+\\)" vc-mode))
+    (propertize (concat "    " (match-string 1 vc-mode))
+                'face 'shadow)))
+
+;; Diagnostics: error and warning counts wherever flymake is checking
+;; (eglot turns it on), or a check mark when there are none
+(declare-function flymake-diagnostics "flymake")
+(declare-function flymake-diagnostic-type "flymake")
+(declare-function flymake--severity "flymake")
+
+(defun ml/diagnostics ()
+  "E.g. \"✗ 2  ⚠ 3  \", colored; nil where flymake isn't on."
+  (when (bound-and-true-p flymake-mode)
+    (let ((errors 0) (warnings 0))
+      (dolist (diag (flymake-diagnostics))
+        (let ((severity (flymake--severity (flymake-diagnostic-type diag))))
+          (cond ((>= severity (warning-numeric-level :error))   (cl-incf errors))
+                ((>= severity (warning-numeric-level :warning)) (cl-incf warnings)))))
+      (if (= 0 errors warnings)
+          (propertize "✓  " 'face 'success)
+        (concat (if (> errors 0) (propertize (format "✗ %d  " errors) 'face 'error) "")
+                (if (> warnings 0) (propertize (format "⚠ %d  " warnings) 'face 'warning) ""))))))
 
 ;;;; The mode line
 
 (let ((old (default-value 'mode-line-format)))
   (setq-default mode-line-format
-                '(" " (:eval (ml/evil-state-tag))
-                  " " mode-line-buffer-identification
+                '(" " mode-line-buffer-identification
+                  (:eval (ml/modified-marker))
+                  (:eval (ml/git-branch))
                   mode-line-format-right-align
+                  (:eval (ml/diagnostics))
+                  (:propertize "%l:%C  " face shadow)   ; line:column
                   (:eval (ml/slots-segment))))
   ;; Buffers made before now (*scratch*, *Messages*...) hold their own copy
   ;; of the old default; bring those along too

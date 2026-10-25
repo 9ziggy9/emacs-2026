@@ -79,9 +79,6 @@
   (ibuffer-expert t)
   (ibuffer-show-empty-filter-groups nil))
 
-(use-package nerd-icons-ibuffer         ; buffer icons
-  :hook (ibuffer-mode . nerd-icons-ibuffer-mode))
-
 (use-package ibuffer-project            ; group buffers by project
   :hook
   (ibuffer . (lambda ()
@@ -155,6 +152,82 @@
 (use-package which-key
   :ensure nil                          ; built in since Emacs 30
   :init (which-key-mode 1))
+
+;;; File tree: C-t (see universal.el)
+(use-package treemacs
+  :defer t
+  :hook
+  (treemacs-mode . (lambda ()        ; text at 75%
+                     (face-remap-add-relative 'default :height 0.75)))
+  (treemacs-mode . my/treemacs-tree-lines-setup)
+  :custom
+  (treemacs-no-png-images t)         ; no icons, just +/- on directories
+  (treemacs-width 22)                ; columns (default 35)
+  :config
+  (treemacs-follow-mode 1)           ; highlight the file you're in
+  (treemacs-project-follow-mode 1))  ; switch projects as you do
+
+;; tree(1)-style lines: treemacs indents every level with the same string,
+;; so after each change, cover each line's indentation with ├── └── │
+;; connectors worked out from the depths of the lines below it
+(defvar treemacs-indentation)
+
+(defun my/treemacs-draw-tree-lines ()
+  "Draw tree-style connectors over the current treemacs buffer's indentation."
+  (remove-overlays (point-min) (point-max) 'my/tree-line t)
+  ;; Walking bottom-up, more[k] says whether another item at depth k
+  ;; still follows (before its parent's level ends)
+  (let ((more (make-vector 64 nil)))
+    (save-excursion
+      (goto-char (point-max))
+      (while (progn
+               (forward-line 0)
+               (let* ((eol (line-end-position))
+                      (pos (text-property-not-all (point) eol :depth nil))
+                      (depth (and pos (get-text-property pos :depth))))
+                 (when (and (natnump depth) (< depth 64))
+                   (when (> depth 0)
+                     ;; Cover everything before the name: the indentation
+                     ;; and the icon slot, keeping a directory's +/-
+                     (let ((marker (string-trim
+                                    (buffer-substring
+                                     (min pos (+ (point) (* depth treemacs-indentation)))
+                                     pos)))
+                           (ov (make-overlay (point) pos)))
+                       (overlay-put ov 'my/tree-line t)
+                       (overlay-put ov 'display
+                                    (concat
+                                     (propertize
+                                      (mapconcat (lambda (k)
+                                                   (cond ((< k depth) (if (aref more k) "│   " "    "))
+                                                         ((aref more k) "├── ")
+                                                         (t "└── ")))
+                                                 (number-sequence 1 depth) "")
+                                      'face 'shadow)
+                                     (if (string-empty-p marker) "" (concat marker " "))))))
+                   (aset more depth t)
+                   (cl-loop for k from (1+ depth) below 64 do (aset more k nil))))
+               (zerop (forward-line -1)))))))
+
+(defvar-local my/treemacs-redraw-pending nil)
+
+(defun my/treemacs-schedule-tree-lines (&rest _)
+  "Redraw the tree lines once treemacs finishes its current change."
+  (unless my/treemacs-redraw-pending
+    (setq my/treemacs-redraw-pending t)
+    (run-with-timer 0 nil
+                    (lambda (buf)
+                      (when (buffer-live-p buf)
+                        (with-current-buffer buf
+                          (setq my/treemacs-redraw-pending nil)
+                          (my/treemacs-draw-tree-lines))))
+                    (current-buffer))))
+
+(defun my/treemacs-tree-lines-setup ()
+  (add-hook 'after-change-functions #'my/treemacs-schedule-tree-lines nil t))
+
+(use-package treemacs-evil           ; j/k and friends inside treemacs
+  :after (treemacs evil))
 
 ;;; Richer help buffers (source, references, keybindings)
 (use-package helpful

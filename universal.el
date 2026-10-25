@@ -21,6 +21,35 @@ so keys like C-j/C-k move through candidates there instead."
                                      (bound-and-true-p completion-in-region-mode))
                            cmd))))
 
+(defun univ/in-file-buffer (command)
+  "A binding for COMMAND only in buffers visiting a file, and treemacs.
+Anywhere else (popups, the minibuffer, *scratch*...) the key falls
+through to its usual binding."
+  `(menu-item "" ,command
+              :filter ,(lambda (cmd)
+                         (when (or buffer-file-name
+                                   (derived-mode-p 'treemacs-mode))
+                           cmd))))
+
+(declare-function treemacs-current-visibility "treemacs")
+(declare-function treemacs-get-local-window "treemacs")
+(declare-function treemacs-add-and-display-current-project-exclusively "treemacs")
+
+(defun univ/toggle-treemacs ()
+  "Show this file's project in treemacs, or hide treemacs if it's showing.
+From a popup, the popup closes and this acts on the main frame."
+  (interactive)
+  (require 'treemacs)
+  (when (eq (selected-frame) pop/frame)
+    (pop/hide))
+  (with-current-buffer (window-buffer (selected-window))
+    (cond ((eq (treemacs-current-visibility) 'visible)
+           (delete-window (treemacs-get-local-window)))
+          ((not buffer-file-name)
+           (user-error "Treemacs opens from a buffer visiting a file"))
+          (t
+           (treemacs-add-and-display-current-project-exclusively)))))
+
 (defun univ/grow-window ()
   "Make the current window wider."
   (interactive)
@@ -66,6 +95,7 @@ so keys like C-j/C-k move through candidates there instead."
   "C-<down>"  (univ/outside-minibuffer #'univ/shrink-window-tall)
   "C-x"   #'pop/close-or-delete-window
   "C-<return>" #'univ/spawn-window
+  "C-t"   (univ/in-file-buffer #'univ/toggle-treemacs)
   ;; Zoom
   "C-="   #'text-scale-increase
   "C--"   #'text-scale-decrease

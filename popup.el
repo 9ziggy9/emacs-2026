@@ -31,7 +31,14 @@
 (defvar-keymap pop/common-map
   :doc "Keys every popup gets; a type's own :keys override these."
   "<escape>" #'pop/escape
-  "?"        #'pop/show-keys)
+  ;; Only where there's a reference, and not while typing (e.g. in the
+  ;; scratchpad, or editing names in dired), so ? can still be typed
+  "?"        `(menu-item "" pop/show-keys
+                         :filter ,(lambda (cmd)
+                                    (and (not (memq (bound-and-true-p evil-state)
+                                                    '(insert replace emacs)))
+                                         (pop/prop (pop/current-type) :help)
+                                         cmd))))
 
 (defvar-keymap pop/minibuffer-map
   :doc "Keys in the popup's minibuffer."
@@ -71,10 +78,11 @@ like evil-collection do bind it, so popup keys are bound under both.")
                   (keymap-set map alias cmd)))
     map))
 
-(defface pop/hint-key '((t :inherit font-lock-keyword-face :weight bold :height 0.75))
+;; Relative to the mode line, which modeline.el already shrinks to 0.85
+(defface pop/hint-key '((t :inherit font-lock-keyword-face :weight bold :height 0.9))
   "Face for a key in a popup's hint line.")
 
-(defface pop/hint-text '((t :inherit shadow :height 0.75))
+(defface pop/hint-text '((t :inherit shadow :height 0.9))
   "Face for what a key does in a popup's hint line.")
 
 (defun pop/format-hints (pairs)
