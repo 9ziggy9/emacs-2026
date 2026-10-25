@@ -28,6 +28,10 @@
   :config
   (load-theme 'railscasts-reloaded t))
 
+(use-package base16-theme :defer t)     ; ~360 schemes: base16-<name>
+(use-package ef-themes :defer t)        ; ~34 polished light/dark themes
+(use-package doom-themes :defer t)      ; ~60 themes: doom-<name>
+
 ;;; Evil
 (use-package evil
   :init
@@ -86,7 +90,14 @@
 
 (use-package consult              ; buffer switcher and searches
   :init
-  (recentf-mode 1))               ; lets consult-buffer offer recent files too
+  (recentf-mode 1)                ; lets consult-buffer offer recent files too
+  :config
+  ;; Hide non-color "themes" from consult-theme: newcomers-presets changes
+  ;; settings (turns on the tab bar), light-blue is obsolete, and base16 is
+  ;; just the base16 package's helper file
+  (setq consult-themes
+        (seq-difference (custom-available-themes)
+                        '(newcomers-presets light-blue base16))))
 
 (use-package consult-eglot              ; project-wide symbols, via clangd
   :after (consult eglot))
@@ -154,7 +165,13 @@
   :custom
   (eglot-ignored-server-capabilities '(:inlayHintProvider)) ; no inline hints
   (eglot-autoshutdown t)               ; stop it when the last C buffer closes
-  (eglot-extend-to-xref t))            ; headers you jump into reuse that clangd
+  (eglot-extend-to-xref t)             ; headers you jump into reuse that clangd
+  :config
+  ;; clangd marks inactive #ifdef branches (e.g. an stb-style
+  ;; #ifdef FOO_IMPLEMENTATION block) as "comment" tokens, greying them out;
+  ;; tree-sitter already highlights real comments
+  (setq eglot-semantic-token-types
+        (delete "comment" eglot-semantic-token-types)))
 
 ;;; Popups
 (load (locate-user-emacs-file "popup") nil t)  ;; API
