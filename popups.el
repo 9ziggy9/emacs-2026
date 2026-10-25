@@ -30,10 +30,6 @@
 ;; Render gcc's colored output instead of showing raw escape codes
 (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter)
 
-;; No column indicator in compilation buffers
-(setq global-display-fill-column-indicator-modes
-      '((not special-mode compilation-mode) t))
-
 (defvar compilation-directory)
 
 ;; Compiles run from the project root of the file you're in.  A directory

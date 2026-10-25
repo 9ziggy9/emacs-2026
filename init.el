@@ -15,9 +15,18 @@
               c-basic-offset 2
               standard-indent 2)
 
-;; Fill column
+;; Fill column: in code, the part of a line past it is drawn in red
 (setq-default fill-column 80)
-(global-display-fill-column-indicator-mode 1)
+
+(use-package whitespace
+  :ensure nil
+  :hook (prog-mode . whitespace-mode)
+  :custom
+  (whitespace-style '(face lines-tail))
+  (whitespace-line-column nil)          ; nil means use `fill-column'
+  :custom-face
+  (whitespace-line ((t (:foreground "#ff5f5f" :background unspecified
+                        :weight unspecified)))))
 
 ;; Line numbers
 (setq display-line-numbers-type 'relative)
@@ -138,7 +147,10 @@
   (corfu-auto t)             ; show candidates automatically while typing
   (corfu-auto-prefix 2)      ; ...after 3 characters
   (corfu-auto-delay 0.4)     ; ...and a short pause
-  (corfu-cycle t))           ; wrap around at the ends of the list
+  (corfu-cycle t)            ; wrap around at the ends of the list
+  :config
+  ;; Popup text at 75% of the buffer's (text scaling included)
+  (set-face-attribute 'corfu-default nil :height 0.75))
 
 ;;; Command log: a live side buffer of every key and the command it ran
 (use-package command-log-mode

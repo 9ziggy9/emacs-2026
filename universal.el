@@ -50,6 +50,29 @@ From a popup, the popup closes and this acts on the main frame."
           (t
            (treemacs-add-and-display-current-project-exclusively)))))
 
+;; Fullscreen, tiling-WM style: the window takes the whole frame (treemacs
+;; too), and toggling again puts the old layout back.  Whatever you did in
+;; the window meanwhile (moving point, switching buffer) carries over.
+
+(defun univ/toggle-fullscreen-window ()
+  "Make the selected window fill the frame, or restore the previous layout."
+  (interactive)
+  (let ((saved (frame-parameter nil 'univ/fullscreen-config)))
+    (cond (saved
+           (let ((buf (current-buffer))
+                 (pt (point)))
+             (set-frame-parameter nil 'univ/fullscreen-config nil)
+             (set-window-configuration saved)
+             (switch-to-buffer buf nil t)
+             (goto-char pt)))
+          ((one-window-p t)
+           (message "Already the only window"))
+          (t
+           (set-frame-parameter nil 'univ/fullscreen-config
+                                (current-window-configuration))
+           (let ((ignore-window-parameters t)) ; side windows too
+             (delete-other-windows))))))
+
 (defun univ/grow-window ()
   "Make the current window wider."
   (interactive)
@@ -89,6 +112,7 @@ From a popup, the popup closes and this acts on the main frame."
   "C-S-k" #'windmove-swap-states-up
   "C-S-l" #'windmove-swap-states-right
   "C-]"   #'window-layout-transpose  ; side-by-side <-> stacked
+  "C-f"   (univ/outside-minibuffer #'univ/toggle-fullscreen-window)
   "C-<right>" (univ/outside-minibuffer #'univ/grow-window)
   "C-<left>"  (univ/outside-minibuffer #'univ/shrink-window)
   "C-<up>"    (univ/outside-minibuffer #'univ/grow-window-tall)
