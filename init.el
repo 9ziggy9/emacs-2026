@@ -160,10 +160,12 @@
   (treemacs-mode . (lambda ()        ; text at 75%
                      (face-remap-add-relative 'default :height 0.75)))
   (treemacs-mode . my/treemacs-tree-lines-setup)
+  (treemacs-mode . my/treemacs-preview-setup)
   :custom
   (treemacs-no-png-images t)         ; no icons, just +/- on directories
   (treemacs-width 22)                ; columns (default 35)
   :config
+  (add-hook 'window-selection-change-functions #'my/treemacs-keep-preview)
   (treemacs-follow-mode 1)           ; highlight the file you're in
   (treemacs-project-follow-mode 1))  ; switch projects as you do
 
@@ -222,6 +224,53 @@
                           (setq my/treemacs-redraw-pending nil)
                           (my/treemacs-draw-tree-lines))))
                     (current-buffer))))
+
+;; Preview: resting on a file in treemacs shows it in the window you came
+;; from.  A file opened only to preview is closed as soon as the preview
+;; moves on, so at most one exists; leaving treemacs keeps whatever is
+;; showing.  (treemacs-peek-mode only cleans up on some ways of leaving.)
+(declare-function treemacs-current-button "treemacs-core-utils")
+(declare-function treemacs-button-get "treemacs-core-utils")
+
+(defvar my/treemacs-preview-buffer nil
+  "Buffer opened only for previewing, or nil.")
+
+(defvar my/treemacs-preview-timer nil)
+
+(defun my/treemacs-preview (treemacs-buf)
+  "Show the file at point in TREEMACS-BUF in the most recent other window."
+  (when (eq (window-buffer (selected-window)) treemacs-buf)
+    (with-current-buffer treemacs-buf
+      (let* ((button (treemacs-current-button))
+             (path (and button (treemacs-button-get button :path)))
+             (win (get-mru-window nil nil t)))
+        (when (and (stringp path) (file-regular-p path) (window-live-p win))
+          (let* ((existing (get-file-buffer path))
+                 (buf (or existing
+                          (let ((inhibit-message t))
+                            (find-file-noselect path))))
+                 (old my/treemacs-preview-buffer))
+            (set-window-buffer win buf)
+            (setq my/treemacs-preview-buffer (unless existing buf))
+            (when (and (buffer-live-p old) (not (eq old buf))
+                       (not (get-buffer-window old t)))
+              (kill-buffer old))))))))
+
+(defun my/treemacs-preview-soon ()
+  "Preview once the cursor rests, so scrolling past files doesn't open them."
+  (when (timerp my/treemacs-preview-timer)
+    (cancel-timer my/treemacs-preview-timer))
+  (setq my/treemacs-preview-timer
+        (run-with-idle-timer 0.15 nil #'my/treemacs-preview (current-buffer))))
+
+(defun my/treemacs-preview-setup ()
+  (add-hook 'post-command-hook #'my/treemacs-preview-soon nil t))
+
+(defun my/treemacs-keep-preview (&rest _)
+  "Leaving treemacs, by any route, keeps the previewed file open."
+  (unless (with-current-buffer (window-buffer (selected-window))
+            (derived-mode-p 'treemacs-mode))
+    (setq my/treemacs-preview-buffer nil)))
 
 (defun my/treemacs-tree-lines-setup ()
   (add-hook 'after-change-functions #'my/treemacs-schedule-tree-lines nil t))
