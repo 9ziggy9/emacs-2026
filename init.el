@@ -76,7 +76,16 @@
 (use-package ibuffer
   :ensure nil
   :custom
-  (ibuffer-expert t))
+  (ibuffer-expert t)
+  (ibuffer-show-empty-filter-groups nil))
+
+(use-package nerd-icons-ibuffer         ; buffer icons
+  :hook (ibuffer-mode . nerd-icons-ibuffer-mode))
+
+(use-package ibuffer-project            ; group buffers by project
+  :hook
+  (ibuffer . (lambda ()
+               (setq ibuffer-filter-groups (ibuffer-project-generate-filter-groups)))))
 
 ;;; Completion: fzf-style fuzzy finding in the minibuffer
 (use-package vertico              ; vertical candidate list
