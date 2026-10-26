@@ -50,6 +50,23 @@ From a popup, the popup closes and this acts on the main frame."
           (t
            (treemacs-add-and-display-current-project-exclusively)))))
 
+;; Buffer cycling skips anything not visiting a file (compilation,
+;; dired, *Warnings*...), so it only steps through your code
+(defun univ/skip-non-file-buffer (_window buffer _bury-or-kill)
+  (not (buffer-file-name buffer)))
+
+(defun univ/previous-file-buffer ()
+  "Switch to the previous buffer that visits a file."
+  (interactive)
+  (let ((switch-to-prev-buffer-skip #'univ/skip-non-file-buffer))
+    (previous-buffer)))
+
+(defun univ/next-file-buffer ()
+  "Switch to the next buffer that visits a file."
+  (interactive)
+  (let ((switch-to-prev-buffer-skip #'univ/skip-non-file-buffer))
+    (next-buffer)))
+
 ;; Fullscreen, tiling-WM style: the window takes the whole frame (treemacs
 ;; too), and toggling again puts the old layout back.  Whatever you did in
 ;; the window meanwhile (moving point, switching buffer) carries over.
@@ -120,6 +137,9 @@ From a popup, the popup closes and this acts on the main frame."
   "C-x"   #'pop/close-or-delete-window
   "C-<return>" #'univ/spawn-window
   "C-t"   (univ/in-file-buffer #'univ/toggle-treemacs)
+  ;; Buffers
+  "C-,"   (univ/outside-minibuffer #'univ/previous-file-buffer)
+  "C-."   (univ/outside-minibuffer #'univ/next-file-buffer)
   ;; Zoom
   "C-="   #'text-scale-increase
   "C--"   #'text-scale-decrease

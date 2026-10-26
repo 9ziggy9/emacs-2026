@@ -175,7 +175,7 @@ The prompt starts with the last command, so C-<return> twice reruns it."
             "d"          pop/compile-set-directory
             "q"          pop/hide)
   :hints   ("C-RET" "compile"  "r" "rerun"  "d" "directory"  "n/p" "next/prev error"
-            "RET" "go to error"  "K" "stop"  "?" "keys"  "esc" "close")
+            "K" "stop"  "?" "keys")
   :help    (("Run"
              "C-RET" "enter a compile command"
              "C-RET C-RET" "rerun, from the prompt"
@@ -233,12 +233,13 @@ The prompt starts with the last command, so C-<return> twice reruns it."
   :match   (derived-mode-p 'dired-mode)
   :open    #'pop/dired-here
   :size    (0.8 . 0.8)
+  :setup   (pop/text-scale 0.8)
   :keys    ("RET"        pop/dired-find-file
             "C-<return>" pop/dired-open-in-split
             "q"          pop/hide)
-  :hints   ("RET" "open"  "C-RET" "split"  "-" "up"  "m/u" "mark"
+  :hints   ("C-RET" "split"  "-" "up"  "m/u" "mark"
             "d/x" "delete"  "R" "rename"  "C" "copy"  "=" "file"  "+" "dir"
-            "?" "keys"  "esc" "close")
+            "?" "keys")
   :help    (("Move"
              "RET" "open file / enter dir"
              "C-RET" "open in a split"
@@ -320,12 +321,13 @@ The prompt starts with the last command, so C-<return> twice reruns it."
 (pop/define ibuffer
   :match   (derived-mode-p 'ibuffer-mode)
   :open    #'pop/ibuffer-here
+  :setup   (pop/text-scale 0.8)
   :keys    ("RET"        pop/ibuffer-visit
             "C-<return>" pop/ibuffer-visit-in-split
             "q"          pop/hide)
-  :hints   ("RET" "visit"  "C-RET" "split"  "m/u" "mark"  "d/x" "kill"
-            "S" "save"  "s n" "filter"  "s /" "unfilter"  "TAB" "next group"
-            "?" "keys"  "esc" "close")
+  :hints   ("C-RET" "split"  "m/u" "mark"  "d/x" "kill"
+            "S" "save"  "TAB" "next group"
+            "?" "keys")
   :help    (("Visit"
              "RET" "show buffer"
              "C-RET" "show in a split"
