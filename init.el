@@ -38,13 +38,42 @@
     (face-remap-add-relative 'default :height 0.6)))
 
 ;;; Theme
-(use-package railscasts-reloaded-theme
-  :config
-  (load-theme 'railscasts-reloaded t))
+(use-package railscasts-reloaded-theme :defer t)
+
+;; Selections (visual mode) are shaded darker than the background, not
+;; lighter; redone after each theme, since themes set the region face
+(defun my/darken-region (&rest _)
+  (require 'color)
+  (let ((bg (face-background 'default nil t)))
+    (when (color-defined-p bg)
+      (set-face-background 'region (color-darken-name bg 7)))))
+
+(my/darken-region)
+(add-hook 'enable-theme-functions #'my/darken-region)
 
 (use-package base16-theme :defer t)     ; ~360 schemes: base16-<name>
 (use-package ef-themes :defer t)        ; ~34 polished light/dark themes
 (use-package doom-themes :defer t)      ; ~60 themes: doom-<name>
+
+;; The theme picked with consult-theme is remembered across restarts;
+;; Railscasts until one is picked (or if the saved one is gone)
+(defvar my/theme-file (locate-user-emacs-file "theme")
+  "File holding the name of the last theme picked.")
+
+(defun my/save-theme (theme)
+  "Remember THEME for the next start."
+  (when theme
+    (with-temp-file my/theme-file
+      (prin1 theme (current-buffer)))))
+
+(defun my/saved-theme ()
+  (ignore-errors
+    (with-temp-buffer
+      (insert-file-contents my/theme-file)
+      (read (current-buffer)))))
+
+(unless (ignore-errors (load-theme (my/saved-theme) t))
+  (load-theme 'railscasts-reloaded t))
 
 ;;; Evil
 (use-package evil
@@ -64,11 +93,20 @@
     "C"   #'comment-or-uncomment-region
     (kbd "SPC") #'my/cursors-at-line-starts
     "J"   #'my/move-lines-down
-    "K"   #'my/move-lines-up)
+    "K"   #'my/move-lines-up
+    "f"   #'my/fold-selection
+    "F"   #'my/unfold-selection)
   (evil-define-key 'normal 'global
     "-" #'evil-join
     "C" #'comment-line
-    "L" #'evil-multiedit-match-and-next))
+    "L" #'evil-multiedit-match-and-next
+    "F" #'vimish-fold-delete
+    ;; Tab toggles the fold under the cursor, in code only, so Tab keeps
+    ;; its own job elsewhere (org, popups...)
+    (kbd "<tab>") `(menu-item "" vimish-fold-toggle
+                              :filter ,(lambda (cmd)
+                                         (when (derived-mode-p 'prog-mode)
+                                           cmd)))))
 
 (use-package evil-multiedit            ; L: edit every match of the word at once
   :after evil
@@ -135,6 +173,28 @@
   (interactive)
   (my/move-lines -1))
 
+;; Folding: f folds the selected lines, Tab opens and closes a fold, F
+;; removes folds for good.  Folds last until the buffer is closed.
+(use-package vimish-fold
+  :commands (vimish-fold vimish-fold-toggle vimish-fold-delete))
+
+(declare-function vimish-fold--folds-in "vimish-fold")
+(declare-function vimish-fold--delete "vimish-fold")
+
+(defun my/fold-selection ()
+  "Fold the lines of the visual selection."
+  (interactive)
+  (vimish-fold evil-visual-beginning evil-visual-end)
+  (evil-normal-state))
+
+(defun my/unfold-selection ()
+  "Remove every fold the visual selection touches."
+  (interactive)
+  (require 'vimish-fold)
+  (mapc #'vimish-fold--delete
+        (vimish-fold--folds-in evil-visual-beginning evil-visual-end))
+  (evil-normal-state))
+
 (use-package evil-collection
   :after evil
   :config
@@ -193,7 +253,8 @@
   ;; just the base16 package's helper file
   (setq consult-themes
         (seq-difference (custom-available-themes)
-                        '(newcomers-presets light-blue base16))))
+                        '(newcomers-presets light-blue base16)))
+  (advice-add 'consult-theme :after #'my/save-theme))
 
 (use-package consult-eglot              ; project-wide symbols, via clangd
   :after (consult eglot))
