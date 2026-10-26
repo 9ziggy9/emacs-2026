@@ -398,4 +398,67 @@ The prompt starts with the last command, so C-<return> twice reruns it."
               (equal (file-name-nondirectory buffer-file-name) "README.org"))
   :open  #'pop/readme-here)
 
+;;;; Window keys
+
+;; A cheat sheet of the universal keys (universal.el), laid out like ?
+;; in other popups; update it when those change
+
+(defvar pop/wm-help
+  '(("Move between windows"
+     "C-h/j/k/l" "left / down / up / right")
+    ("Swap windows"
+     "C-S-h/j/k/l" "swap left / down / up / right")
+    ("Layout"
+     "C-RET" "split right, with dired"
+     "C-x" "close window"
+     "C-f" "fullscreen on / off"
+     "C-]" "side by side <-> stacked")
+    ("Resize"
+     "C-<left>/<right>" "narrower / wider"
+     "C-<up>/<down>" "taller / shorter")
+    ("Buffers"
+     "C-, / C-." "previous / next file buffer"
+     "C-t" "file tree")
+    ("Zoom"
+     "C-=" "bigger"
+     "C--" "smaller"
+     "C-0" "reset")
+    ("Search"
+     "M-s M-f" "find a file"
+     "M-s M-d" "this document"
+     "M-s M-i" "definitions here"
+     "M-s M-I" "project symbols"
+     "M-s M-p" "text in the project")
+    ("Popups"
+     "F1-F6" "mode line slots, on / off"
+     "esc" "close"
+     "C-x" "close and kill buffer"))
+  "Sections (HEADING KEY TEXT ...) for the window keys popup.")
+
+(define-derived-mode pop/wm-mode special-mode "Window keys"
+  "The window keys cheat sheet."
+  (setq-local cursor-type nil
+              truncate-lines t))
+
+(defun pop/wm-buffer ()
+  (with-current-buffer (get-buffer-create "*window keys*")
+    (unless (derived-mode-p 'pop/wm-mode)
+      (pop/wm-mode))
+    (current-buffer)))
+
+(defun pop/wm-render ()
+  "Lay out the sheet to fit the popup's current width."
+  (let ((inhibit-read-only t))
+    (erase-buffer)
+    (pop/insert-keys "Window keys" pop/wm-help
+                     (window-body-width (frame-root-window pop/frame)))
+    (goto-char (point-min))))
+
+(pop/define wm
+  :match (derived-mode-p 'pop/wm-mode)
+  :open  #'pop/wm-buffer
+  :setup (pop/wm-render)
+  :keys  ("q" pop/hide)
+  :hints ("esc/q" "close"))
+
 (provide 'popups)

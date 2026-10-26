@@ -16,7 +16,8 @@
     ("dired"   . pop/dired-toggle)
     ("ibuffer" . pop/ibuffer-toggle)
     ("tree"    . univ/toggle-treemacs)
-    ("readme"  . pop/readme-toggle))
+    ("readme"  . pop/readme-toggle)
+    ("wm"      . pop/wm-toggle))
   "Slots (LABEL . COMMAND) for modes without their own; the first is F1.
 A nil entry leaves that slot empty.")
 
