@@ -11,6 +11,9 @@
   (with-current-buffer (get-buffer-create buf)
     (face-remap-add-relative 'default :height 0.6)))
 
+;; Long messages show only their first line, rather than growing the echo area
+(setq message-truncate-lines t)
+
 ;;; Theme
 (use-package railscasts-reloaded-theme :defer t)
 

@@ -53,7 +53,7 @@
   :ensure nil
   :custom
   (eldoc-idle-delay 0.2)                 ; pause before docs appear (default 0.5)
-  (eldoc-echo-area-use-multiline-p t)    ; let the echo area grow to fit
+  (eldoc-echo-area-use-multiline-p nil)  ; one line, like other messages
   (eldoc-echo-area-prefer-doc-buffer t)) ; if *eldoc* is open, show docs there instead
 
 (use-package eglot
