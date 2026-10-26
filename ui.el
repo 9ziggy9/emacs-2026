@@ -1,202 +1,165 @@
-;;; popups.el --- popup type definitions -*- lexical-binding: t -*-
-
-;; Each popup is a `pop/define' declaration plus the few commands it
-;; needs.  Toggle keys live in universal.el.
+;;; ui.el --- looks, windows, file and buffer browsing, popups -*- lexical-binding: t -*-
 
 (require 'popup)
 
-(declare-function face-remap-remove-relative "face-remap")
-(defvar-local pop/text-scale-cookie nil)
+;; Line numbers
+(setq display-line-numbers-type 'relative)
+(add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
-(defun pop/text-scale (factor)
-  "Scale the current buffer's text by FACTOR, replacing any earlier scale."
-  (when pop/text-scale-cookie
-    (face-remap-remove-relative pop/text-scale-cookie))
-  (setq-local pop/text-scale-cookie
-              (face-remap-add-relative 'default :height factor)))
+;; Echo area text at 60% of the buffer text size
+(dolist (buf '(" *Echo Area 0*" " *Echo Area 1*"))
+  (with-current-buffer (get-buffer-create buf)
+    (face-remap-add-relative 'default :height 0.6)))
 
-;;;; Compilation
+;;; Theme
+(use-package railscasts-reloaded-theme :defer t)
 
-(defvar compilation-always-kill)
-(defvar compilation-scroll-output)
-(defvar compile-command)
-(defvar compile-history)
-(declare-function compile-goto-error "compile")
-(declare-function compilation-mode "compile")
+;; Selections (visual mode) are shaded darker than the background, not
+;; lighter; redone after each theme, since themes set the region face
+(defun my/darken-region (&rest _)
+  (require 'color)
+  (let ((bg (face-background 'default nil t)))
+    (when (color-defined-p bg)
+      (set-face-background 'region (color-darken-name bg 7)))))
 
-(setq compilation-always-kill t               ; new compile kills old, no prompt
-      compilation-scroll-output 'first-error) ; follow output, stop at 1st error
+(my/darken-region)
+(add-hook 'enable-theme-functions #'my/darken-region)
 
-;; Render gcc's colored output instead of showing raw escape codes
-(add-hook 'compilation-filter-hook #'ansi-color-compilation-filter)
+(use-package base16-theme :defer t)     ; ~360 schemes: base16-<name>
+(use-package ef-themes :defer t)        ; ~34 polished light/dark themes
+(use-package doom-themes :defer t)      ; ~60 themes: doom-<name>
 
-(defvar compilation-directory)
+;; The theme picked with consult-theme is remembered across restarts;
+;; Railscasts until one is picked (or if the saved one is gone)
+(defvar my/theme-file (locate-user-emacs-file "theme")
+  "File holding the name of the last theme picked.")
 
-;; Compiles run from the project root of the file you're in.  A directory
-;; picked with `d' sticks while you stay in that project.
+(defun my/save-theme (theme)
+  "Remember THEME for the next start."
+  (when theme
+    (with-temp-file my/theme-file
+      (prin1 theme (current-buffer)))))
 
-(defvar pop/compile-picked-dir nil
-  "Directory chosen with `pop/compile-set-directory', or nil.")
+(defun my/saved-theme ()
+  (ignore-errors
+    (with-temp-buffer
+      (insert-file-contents my/theme-file)
+      (read (current-buffer)))))
 
-(defun pop/project-dir (buffer)
-  "BUFFER's project root, or its own directory if it's in no project."
-  (let ((dir (buffer-local-value 'default-directory buffer)))
-    (if-let* ((project (project-current nil dir)))
-        (expand-file-name (project-root project))
-      dir)))
+(unless (ignore-errors (load-theme (my/saved-theme) t))
+  (load-theme 'railscasts-reloaded t))
 
-(defun pop/compile-use-directory (dir)
-  "Compile from DIR from now on, reruns included."
-  (setq default-directory (file-name-as-directory dir)
-        compilation-directory default-directory))
+;; consult-theme lists color themes only, and the pick is remembered:
+;; newcomers-presets changes settings (turns on the tab bar), light-blue
+;; is obsolete, and base16 is just the base16 package's helper file
+(with-eval-after-load 'consult
+  (setq consult-themes
+        (seq-difference (custom-available-themes)
+                        '(newcomers-presets light-blue base16)))
+  (advice-add 'consult-theme :after #'my/save-theme))
 
-(defun pop/compile-buffer ()
-  "The compilation buffer, pointed at the current project's root."
-  (let ((root (pop/project-dir (pop/main-buffer))))
-    (with-current-buffer (get-buffer-create "*compilation*")
-      (unless (derived-mode-p 'compilation-mode)
-        (compilation-mode))
-      ;; Leave a running compile alone; changing directory mid-run would
-      ;; break finding the files its errors point at
-      (unless (get-buffer-process (current-buffer))
-        (unless (and pop/compile-picked-dir
-                     (string-prefix-p root pop/compile-picked-dir))
-          (setq pop/compile-picked-dir nil))
-        (pop/compile-use-directory (or pop/compile-picked-dir root)))
-      (current-buffer))))
+;;; Windows
+(use-package window
+  :ensure nil
+  :custom
+  (window-combination-resize t))
 
-(defun pop/compile-set-directory ()
-  "Choose the directory compiles run from."
-  (interactive)
-  (if (get-buffer-process (current-buffer))
-      (user-error "Wait for the compile to finish (or K to stop it)")
-    (let ((dir (read-directory-name "Compile in: " default-directory nil t)))
-      (setq pop/compile-picked-dir (file-name-as-directory (expand-file-name dir)))
-      (pop/compile-use-directory pop/compile-picked-dir)
-      (force-mode-line-update))))
+;;; Key hints: pause after a prefix to see what can follow it
+(use-package which-key
+  :ensure nil                          ; built in since Emacs 30
+  :init (which-key-mode 1))
 
-(defun pop/compile-prompt ()
-  "Prompt for a compile command in the popup's minibuffer and run it.
-The prompt starts with the last command, so C-<return> twice reruns it."
-  (interactive)
-  (compile (read-shell-command "Compile: " compile-command 'compile-history))
-  (pop/focus))
+;;; Richer help buffers (source, references, keybindings)
+(use-package helpful
+  :bind
+  (([remap describe-function] . helpful-callable)
+   ([remap describe-variable] . helpful-variable)
+   ([remap describe-command]  . helpful-command)
+   ([remap describe-key]      . helpful-key)
+   ([remap describe-symbol]   . helpful-symbol)))
 
-(defun pop/compile-goto-error ()
-  "Hide the popup and jump to the error at point in the main frame."
-  (interactive)
-  (let ((buf (current-buffer))
-        (pos (point))
-        ;; Jumping makes compile re-display its buffer; keep the popup hidden
-        (pop/suppress t))
-    (pop/hide)
-    (with-current-buffer buf
-      (goto-char pos)
-      (compile-goto-error))
-    (pop/hide)))
+;;; Command log: a live side buffer of every key and the command it ran
+(use-package command-log-mode
+  :commands clm/toggle-command-log-buffer
+  :custom
+  (command-log-mode-key-binding-open-log nil)   ; don't grab C-c o
+  (command-log-mode-open-log-turns-on-mode t)   ; opening the log starts logging
+  (command-log-mode-is-global t))               ; ...in every buffer
 
-(defun pop/compile-rerun ()
-  "Run the last compile command again."
-  (interactive)
-  (recompile)
-  (pop/focus))
+;;; File tree: C-t (see universal.el)
+(use-package treemacs
+  :defer t
+  :hook
+  (treemacs-mode . (lambda ()        ; text at 75%
+                     (face-remap-add-relative 'default :height 0.75)))
+  (treemacs-mode . my/treemacs-preview-setup)
+  :custom
+  (treemacs-no-png-images t)         ; no icons, just +/- on directories
+  (treemacs-width 22)                ; columns (default 35)
+  :config
+  (add-hook 'window-selection-change-functions #'my/treemacs-keep-preview)
+  (treemacs-follow-mode 1)           ; highlight the file you're in
+  (treemacs-project-follow-mode 1))  ; switch projects as you do
 
-;; Status bar: state, how long it took, the command, and error counts
+;; Preview: resting on a file in treemacs shows it in the window you came
+;; from.  A file opened only to preview is closed as soon as the preview
+;; moves on, so at most one exists; leaving treemacs keeps whatever is
+;; showing.  (treemacs-peek-mode only cleans up on some ways of leaving.)
+(declare-function treemacs-current-button "treemacs-core-utils")
+(declare-function treemacs-button-get "treemacs-core-utils")
 
-(defvar compilation-arguments)
-(defvar compilation-num-errors-found)
-(defvar compilation-num-warnings-found)
+(defvar my/treemacs-preview-buffer nil
+  "Buffer opened only for previewing, or nil.")
 
-(defvar-local pop/compile-started nil "When the current run started.")
-(defvar-local pop/compile-result nil "(MESSAGE . SECONDS) of the last finished run.")
+(defvar my/treemacs-preview-timer nil)
 
-(add-hook 'compilation-start-hook
-          (lambda (_proc)
-            (setq pop/compile-started (float-time)
-                  pop/compile-result nil)))
+(defun my/treemacs-preview (treemacs-buf)
+  "Show the file at point in TREEMACS-BUF in the most recent other window."
+  (when (eq (window-buffer (selected-window)) treemacs-buf)
+    (with-current-buffer treemacs-buf
+      (let* ((button (treemacs-current-button))
+             (path (and button (treemacs-button-get button :path)))
+             (win (get-mru-window nil nil t)))
+        (when (and (stringp path) (file-regular-p path) (window-live-p win))
+          (let* ((existing (get-file-buffer path))
+                 (buf (or existing
+                          (let ((inhibit-message t))
+                            (find-file-noselect path))))
+                 (old my/treemacs-preview-buffer))
+            (set-window-buffer win buf)
+            (setq my/treemacs-preview-buffer (unless existing buf))
+            (when (and (buffer-live-p old) (not (eq old buf))
+                       (not (get-buffer-window old t)))
+              (kill-buffer old))))))))
 
-(add-hook 'compilation-finish-functions
-          (lambda (buf msg)
-            (with-current-buffer buf
-              (setq pop/compile-result
-                    (cons (string-trim msg)
-                          (and pop/compile-started
-                               (- (float-time) pop/compile-started)))))))
+(defun my/treemacs-preview-soon ()
+  "Preview once the cursor rests, so scrolling past files doesn't open them."
+  (when (timerp my/treemacs-preview-timer)
+    (cancel-timer my/treemacs-preview-timer))
+  (setq my/treemacs-preview-timer
+        (run-with-idle-timer 0.15 nil #'my/treemacs-preview (current-buffer))))
 
-(defun pop/compile-status ()
-  "The run's state as a colored string, e.g. \"✓ done 1.2s\"."
-  (pcase-let ((`(,msg . ,secs) pop/compile-result))
-    (cond ((get-buffer-process (current-buffer))
-           (propertize "● running" 'face 'warning))
-          ((null msg)
-           (propertize "○ ready" 'face 'shadow))
-          ((string-prefix-p "finished" msg)
-           (propertize (format "✓ done %.1fs" (or secs 0)) 'face 'success))
-          (t
-           (propertize (if (string-match "code \\([0-9]+\\)" msg)
-                           (format "✗ exit %s  %.1fs" (match-string 1 msg) (or secs 0))
-                         (format "✗ %s" msg))
-                       'face 'error)))))
+(defun my/treemacs-preview-setup ()
+  (add-hook 'post-command-hook #'my/treemacs-preview-soon nil t))
 
-(defun pop/compile-header ()
-  "Header line for the compile popup."
-  (let ((cmd (car compilation-arguments))
-        (errors compilation-num-errors-found)
-        (warnings compilation-num-warnings-found))
-    (list " " (pop/compile-status)
-          "   " (propertize (string-replace "%" "%%" (abbreviate-file-name default-directory))
-                            'face 'font-lock-function-name-face)
-          (if cmd
-              (concat "   " (propertize (string-replace "%" "%%" cmd)
-                                        'face 'font-lock-string-face))
-            "   C-RET to start")
-          'mode-line-format-right-align
-          (if (> errors 0)
-              (propertize (format "%d error%s  " errors (if (= errors 1) "" "s"))
-                          'face 'error)
-            "")
-          (if (> warnings 0)
-              (propertize (format "%d warning%s  " warnings (if (= warnings 1) "" "s"))
-                          'face 'warning)
-            ""))))
+(defun my/treemacs-keep-preview (&rest _)
+  "Leaving treemacs, by any route, keeps the previewed file open."
+  (unless (with-current-buffer (window-buffer (selected-window))
+            (derived-mode-p 'treemacs-mode))
+    (setq my/treemacs-preview-buffer nil)))
 
-(pop/define compile
-  :match   (derived-mode-p 'compilation-mode)
-  :open    #'pop/compile-buffer
-  :capture t
-  :setup   (progn (pop/text-scale 0.8)
-                  (setq-local header-line-format '(:eval (pop/compile-header))))
-  :keys    ("RET"        pop/compile-goto-error
-            "C-<return>" pop/compile-prompt
-            "r"          pop/compile-rerun
-            "n"          compilation-next-error
-            "p"          compilation-previous-error
-            "K"          kill-compilation
-            "d"          pop/compile-set-directory
-            "q"          pop/hide)
-  :hints   ("C-RET" "compile"  "r" "rerun"  "d" "directory"  "n/p" "next/prev error"
-            "K" "stop"  "?" "keys")
-  :help    (("Run"
-             "C-RET" "enter a compile command"
-             "C-RET C-RET" "rerun, from the prompt"
-             "r" "rerun the last command"
-             "K" "stop the running compile"
-             "d" "change directory (sticks per project)")
-            ("Errors"
-             "n" "next error"
-             "p" "previous error"
-             "RET" "jump to error at point"
-             "M-n/M-p" "next/previous error")
-            ("Output"
-             "j/k" "move"
-             "gg/G" "top / bottom"
-             "/" "search")
-            ("Popup"
-             "?" "this sheet"
-             "esc/q" "close"
-             "C-x" "close and kill buffer")))
+(use-package treemacs-evil           ; j/k and friends inside treemacs
+  :after (treemacs evil))
 
-;;;; Dired
+;;; Dired
+(use-package dired
+  :ensure nil
+  :custom
+  (dired-kill-when-opening-new-dired-buffer t)
+  :config
+  (evil-define-key 'normal dired-mode-map
+    "=" #'dired-create-empty-file     ; the +/= key on its own
+    "+" #'dired-create-directory))    ; with Shift
 
 (declare-function dired-get-file-for-visit "dired")
 (declare-function dired-find-file "dired")
@@ -287,7 +250,17 @@ The prompt starts with the last command, so C-<return> twice reruns it."
              "esc/q" "close"
              "C-x" "close and kill buffer")))
 
-;;;; Ibuffer
+;;; Ibuffer
+(use-package ibuffer
+  :ensure nil
+  :custom
+  (ibuffer-expert t)
+  (ibuffer-show-empty-filter-groups nil))
+
+(use-package ibuffer-project            ; group buffers by project
+  :hook
+  (ibuffer . (lambda ()
+               (setq ibuffer-filter-groups (ibuffer-project-generate-filter-groups)))))
 
 (declare-function ibuffer "ibuffer")
 (declare-function ibuffer-update "ibuffer")
@@ -371,7 +344,7 @@ The prompt starts with the last command, so C-<return> twice reruns it."
              "esc/q" "close"
              "C-x" "close and kill buffer")))
 
-;;;; Scratchpad
+;;; Scratchpad
 
 ;; The *scratch* buffer, for notes and trying out elisp; escape leaves
 ;; insert state first, then closes
@@ -380,7 +353,7 @@ The prompt starts with the last command, so C-<return> twice reruns it."
   :match (equal (buffer-name) "*scratch*")
   :open  #'get-scratch-buffer-create)
 
-;;;; README
+;;; README
 
 ;; README.org at the root of the git repo you're in (wherever .git is),
 ;; created on first save if there isn't one
@@ -398,7 +371,7 @@ The prompt starts with the last command, so C-<return> twice reruns it."
               (equal (file-name-nondirectory buffer-file-name) "README.org"))
   :open  #'pop/readme-here)
 
-;;;; Window keys
+;;; Window keys
 
 ;; A cheat sheet of the universal keys (universal.el), laid out like ?
 ;; in other popups; update it when those change
@@ -461,4 +434,4 @@ The prompt starts with the last command, so C-<return> twice reruns it."
   :keys  ("q" pop/hide)
   :hints ("esc/q" "close"))
 
-(provide 'popups)
+(provide 'ui)

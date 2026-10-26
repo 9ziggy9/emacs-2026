@@ -1,6 +1,6 @@
 ;;; popup.el --- framework for Quake-style floating popups -*- lexical-binding: t -*-
 
-;; Popup types are declared with `pop/define' (see popups.el).  All types
+;; Popup types are declared with `pop/define' (see ui.el, langs.el).  All types
 ;; share one centered child frame; showing a different type swaps its
 ;; content and size.  While a popup has focus, keys are looked up in this
 ;; order:
@@ -173,6 +173,18 @@ like evil-collection do bind it, so popup keys are bound under both.")
          ,(format "Show or hide the %s popup." name)
          (interactive)
          (pop/toggle ',name)))))
+
+;;;; Helpers for popup types
+
+(declare-function face-remap-remove-relative "face-remap")
+(defvar-local pop/text-scale-cookie nil)
+
+(defun pop/text-scale (factor)
+  "Scale the current buffer's text by FACTOR, replacing any earlier scale."
+  (when pop/text-scale-cookie
+    (face-remap-remove-relative pop/text-scale-cookie))
+  (setq-local pop/text-scale-cookie
+              (face-remap-add-relative 'default :height factor)))
 
 ;;;; The popup frame
 
