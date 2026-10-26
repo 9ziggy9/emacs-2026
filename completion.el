@@ -1,5 +1,7 @@
 ;;; completion.el --- minibuffer completion, M-x, autocompletion -*- lexical-binding: t -*-
 
+(require 'popup (locate-user-emacs-file "popup"))  ; the hint faces
+
 ;;; Completion: fzf-style fuzzy finding in the minibuffer
 (use-package vertico              ; vertical candidate list
   :init (vertico-mode 1)

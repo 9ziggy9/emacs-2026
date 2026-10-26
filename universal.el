@@ -1,5 +1,7 @@
 ;;; universal.el --- keys that work everywhere -*- lexical-binding: t -*-
 
+(require 'popup (locate-user-emacs-file "popup"))
+
 (defun univ/spawn-window ()
   "Split to the right and open dired in the new window."
   (interactive)
@@ -158,7 +160,19 @@ From a popup, the popup closes and this acts on the main frame."
   :keymap univ-keys-map)
 
 (univ-keys-mode 1)
-(add-to-list 'emulation-mode-map-alists
-             `((univ-keys-mode . ,univ-keys-map)))
+
+;; These keys must come before evil's in `emulation-mode-map-alists'.
+;; Evil puts its own in front the first time it's turned on in a
+;; buffer, so move ours back in front whenever it is; then it doesn't
+;; matter whether this file loads before or after evil
+(defvar univ-keys-alist `((univ-keys-mode . ,univ-keys-map)))
+
+(defun univ/keys-first ()
+  "Put the universal keys at the front of `emulation-mode-map-alists'."
+  (setq emulation-mode-map-alists
+        (cons univ-keys-alist (delq univ-keys-alist emulation-mode-map-alists))))
+
+(univ/keys-first)
+(add-hook 'evil-local-mode-hook #'univ/keys-first)
 
 (provide 'universal)

@@ -9,13 +9,13 @@
 ;; Revert buffers when files change on disk (e.g. git branch switch)
 (global-auto-revert-mode 1)
 
-;; Order matters: universal.el must come after evil (editing), and the
-;; mode line after universal; files that define popups come after popup
-(dolist (file '("editing"      ; evil and editing commands
-                "completion"   ; minibuffer, M-x, autocompletion
-                "popup"        ; the popup framework
-                "universal"    ; keys that override everything
-                "modeline"     ; the mode line, with F-key slots
-                "ui"           ; looks, windows, dired/ibuffer, popups
-                "langs"))      ; indentation, C, eglot, compiling
-  (load (locate-user-emacs-file file) nil t))
+;; The rest of the config, in any order: each file requires what it
+;; needs, so whichever loads first pulls in its dependencies
+(dolist (feature '(editing      ; evil and editing commands
+                   completion   ; minibuffer, M-x, autocompletion
+                   ui           ; looks, windows, dired/ibuffer, popups
+                   langs        ; indentation, C, eglot, compiling
+                   popup        ; the popup framework
+                   universal    ; keys that override everything
+                   modeline))   ; the mode line, with F-key slots
+  (require feature (locate-user-emacs-file (symbol-name feature))))

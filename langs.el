@@ -1,6 +1,13 @@
 ;;; langs.el --- programming: indentation, C, eglot, compiling -*- lexical-binding: t -*-
 
-(require 'popup)
+(require 'popup (locate-user-emacs-file "popup"))
+
+;; Mode-specific popups go here, each with its mode's slots, which
+;; replace the defaults (see `ml/mode-slots' in modeline.el):
+;;
+;;   (with-eval-after-load 'modeline
+;;     (add-to-list 'ml/mode-slots
+;;                  '(c-ts-mode ("compile" . pop/compile-toggle) ...)))
 
 ;; Indentation
 (setq-default indent-tabs-mode nil

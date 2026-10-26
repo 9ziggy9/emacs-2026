@@ -1,6 +1,6 @@
 ;;; ui.el --- looks, windows, file and buffer browsing, popups -*- lexical-binding: t -*-
 
-(require 'popup)
+(require 'popup (locate-user-emacs-file "popup"))
 
 ;; Line numbers
 (setq display-line-numbers-type 'relative)
@@ -156,10 +156,14 @@
   :ensure nil
   :custom
   (dired-kill-when-opening-new-dired-buffer t)
-  :config
-  (evil-define-key 'normal dired-mode-map
-    "=" #'dired-create-empty-file     ; the +/= key on its own
-    "+" #'dired-create-directory))    ; with Shift
+  :init
+  ;; After evil-collection's own dired keys, so these win
+  (add-hook 'evil-collection-setup-hook
+            (lambda (mode _keymaps)
+              (when (eq mode 'dired)
+                (evil-define-key 'normal dired-mode-map
+                  "=" #'dired-create-empty-file   ; the +/= key on its own
+                  "+" #'dired-create-directory))))) ; with Shift
 
 (declare-function dired-get-file-for-visit "dired")
 (declare-function dired-find-file "dired")

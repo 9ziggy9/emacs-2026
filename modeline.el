@@ -7,7 +7,8 @@
 ;; it.  F-keys with no slot keep their usual binding (e.g. F11 fullscreen).
 
 (require 'cl-lib)
-(require 'popup)
+(require 'popup (locate-user-emacs-file "popup"))
+(require 'universal (locate-user-emacs-file "universal"))
 
 ;;;; Slots
 
