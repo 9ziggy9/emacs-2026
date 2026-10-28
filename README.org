@@ -1,0 +1,46 @@
+* Keys
+These work everywhere (universal.el), over evil and most modes.
+
+** Windows
+| C-h/j/k/l        | move left / down / up / right                 |
+| C-S-h/j/k/l      | swap with the window left / down / up / right |
+| C-RET            | split right, same buffer in both              |
+| C-x              | close window                                  |
+| C-f              | fullscreen on / off                           |
+| C-]              | side by side <-> stacked                      |
+| C-<left>/<right> | narrower / wider                              |
+| C-<up>/<down>    | taller / shorter                              |
+
+** Buffers
+| C-, / C-. | previous / next file buffer                              |
+| C-t       | file tree on / off (C-RET in it opens a file in a split) |
+
+** Zoom
+| C-= | bigger  |
+| C-- | smaller |
+| C-0 | reset   |
+
+** Search
+| M-s M-f | find a file         |
+| M-s M-d | this document       |
+| M-s M-i | definitions here    |
+| M-s M-I | project symbols     |
+| M-s M-p | text in the project |
+
+** Mode line slots and popups
+| F1-F5 | the mode line slots, on / off     |
+| esc   | close a popup                     |
+| C-x   | close a popup and kill its buffer |
+| ?     | a popup's keys                    |
+
+* TODO
+** General
+
+** Magit
+1. Should be modeline accessible, opening in a full size buffer, not popup.
+2. Don't forget about forge, perhaps gh CLI tool is usable from magit.
+
+**  Org mode
+1. Line wrapping at 80 chars.
+2. Icons and so forth.
+3. LaTeX configuration with live previews.

@@ -3,10 +3,9 @@
 (require 'popup (locate-user-emacs-file "popup"))
 
 (defun univ/spawn-window ()
-  "Split to the right and open dired in the new window."
+  "Split to the right, showing the current buffer in the new window too."
   (interactive)
-  (select-window (split-window-right))
-  (dired default-directory))
+  (select-window (split-window-right)))
 
 (defun univ/zoom-reset ()
   "Reset text scale in the current buffer."
@@ -137,7 +136,11 @@ From a popup, the popup closes and this acts on the main frame."
   "C-<up>"    (univ/outside-minibuffer #'univ/grow-window-tall)
   "C-<down>"  (univ/outside-minibuffer #'univ/shrink-window-tall)
   "C-x"   #'pop/close-or-delete-window
-  "C-<return>" #'univ/spawn-window
+  ;; In treemacs, C-<return> opens the file at point in a split instead
+  "C-<return>" `(menu-item "" univ/spawn-window
+                           :filter ,(lambda (cmd)
+                                      (unless (derived-mode-p 'treemacs-mode)
+                                        cmd)))
   "C-t"   (univ/in-file-buffer #'univ/toggle-treemacs)
   ;; Buffers
   "C-,"   (univ/outside-minibuffer #'univ/previous-file-buffer)

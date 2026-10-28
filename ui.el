@@ -116,6 +116,9 @@
 
 (defvar my/treemacs-preview-timer nil)
 
+(defvar my/treemacs-origin nil
+  "(WINDOW BUFFER START POINT): the previewing window, before previews.")
+
 (defun my/treemacs-preview (treemacs-buf)
   "Show the file at point in TREEMACS-BUF in the most recent other window."
   (when (eq (window-buffer (selected-window)) treemacs-buf)
@@ -124,6 +127,9 @@
              (path (and button (treemacs-button-get button :path)))
              (win (get-mru-window nil nil t)))
         (when (and (stringp path) (file-regular-p path) (window-live-p win))
+          (unless my/treemacs-origin
+            (setq my/treemacs-origin (list win (window-buffer win)
+                                           (window-start win) (window-point win))))
           (let* ((existing (get-file-buffer path))
                  (buf (or existing
                           (let ((inhibit-message t))
@@ -149,7 +155,41 @@
   "Leaving treemacs, by any route, keeps the previewed file open."
   (unless (with-current-buffer (window-buffer (selected-window))
             (derived-mode-p 'treemacs-mode))
-    (setq my/treemacs-preview-buffer nil)))
+    (setq my/treemacs-preview-buffer nil
+          my/treemacs-origin nil)))
+
+;; C-<return> opens the file at point in a new split to the right of the
+;; window treemacs came from, like dired's; that window first goes back
+;; to what it showed before any previewing
+(defun my/treemacs-open-in-split ()
+  "Open the file at point in a split right of the window treemacs came from."
+  (interactive)
+  (let* ((button (treemacs-current-button))
+         (path (and button (treemacs-button-get button :path)))
+         (win (get-mru-window nil nil t))
+         (preview my/treemacs-preview-buffer))
+    (unless (and (stringp path) (file-regular-p path))
+      (user-error "Not on a file"))
+    (unless (window-live-p win)
+      (user-error "No window to split"))
+    (when (timerp my/treemacs-preview-timer)
+      (cancel-timer my/treemacs-preview-timer))
+    (pcase my/treemacs-origin
+      (`(,owin ,buf ,start ,pt)
+       (when (and (eq owin win) (buffer-live-p buf))
+         (set-window-buffer win buf)
+         (set-window-start win start)
+         (set-window-point win pt))))
+    (setq my/treemacs-preview-buffer nil
+          my/treemacs-origin nil)
+    (select-window (split-window win nil 'right))
+    (find-file path)
+    ;; A preview of some other file, now shown nowhere
+    (when (and (buffer-live-p preview) (not (get-buffer-window preview t)))
+      (kill-buffer preview))))
+
+(with-eval-after-load 'treemacs
+  (keymap-set treemacs-mode-map "C-<return>" #'my/treemacs-open-in-split))
 
 (use-package treemacs-evil           ; j/k and friends inside treemacs
   :after (treemacs evil))
@@ -363,9 +403,11 @@
 ;;; README
 
 ;; README.org at the root of the git repo you're in (wherever .git is),
-;; created on first save if there isn't one
+;; created on first save if there isn't one.  It opens filling the frame,
+;; a normal buffer with its mode line; toggling again puts the old
+;; layout back.
 
-(defun pop/readme-here ()
+(defun my/readme-here ()
   "The README.org buffer for the main buffer's git repo."
   (let* ((dir (buffer-local-value 'default-directory (pop/main-buffer)))
          (root (or (locate-dominating-file dir ".git")
@@ -373,72 +415,48 @@
                                (abbreviate-file-name dir)))))
     (find-file-noselect (expand-file-name "README.org" root))))
 
-(pop/define readme
-  :match (and buffer-file-name
-              (equal (file-name-nondirectory buffer-file-name) "README.org"))
-  :open  #'pop/readme-here)
+(defun my/readme-toggle ()
+  "Open this repo's README.org filling the frame, or go back from it."
+  (interactive)
+  (let ((buf (my/readme-here)))
+    (when (eq (selected-frame) pop/frame)
+      (pop/hide))
+    (let ((saved (frame-parameter nil 'my/readme-return)))
+      (if (and saved (eq (current-buffer) buf))
+          (progn
+            (set-frame-parameter nil 'my/readme-return nil)
+            (set-window-configuration saved))
+        (set-frame-parameter nil 'my/readme-return (current-window-configuration))
+        (let ((ignore-window-parameters t)) ; side windows (treemacs) too
+          (delete-other-windows))
+        (switch-to-buffer buf)))))
 
-;;; Window keys
+;;; About
 
-;; A cheat sheet of the universal keys (universal.el), laid out like ?
-;; in other popups; update it when those change
+;; This config's own README.org, read-only in a popup with no mode line.
+;; It's a copy, refreshed on each open, so the file itself stays a normal
+;; buffer wherever you edit it.
 
-(defvar pop/wm-help
-  '(("Move between windows"
-     "C-h/j/k/l" "left / down / up / right")
-    ("Swap windows"
-     "C-S-h/j/k/l" "swap left / down / up / right")
-    ("Layout"
-     "C-RET" "split right, with dired"
-     "C-x" "close window"
-     "C-f" "fullscreen on / off"
-     "C-]" "side by side <-> stacked")
-    ("Resize"
-     "C-<left>/<right>" "narrower / wider"
-     "C-<up>/<down>" "taller / shorter")
-    ("Buffers"
-     "C-, / C-." "previous / next file buffer"
-     "C-t" "file tree")
-    ("Zoom"
-     "C-=" "bigger"
-     "C--" "smaller"
-     "C-0" "reset")
-    ("Search"
-     "M-s M-f" "find a file"
-     "M-s M-d" "this document"
-     "M-s M-i" "definitions here"
-     "M-s M-I" "project symbols"
-     "M-s M-p" "text in the project")
-    ("Popups"
-     "F1-F6" "mode line slots, on / off"
-     "esc" "close"
-     "C-x" "close and kill buffer"))
-  "Sections (HEADING KEY TEXT ...) for the window keys popup.")
+(defun pop/about-buffer ()
+  "A read-only copy of the config's README.org."
+  (let ((file (locate-user-emacs-file "README.org")))
+    (with-current-buffer (get-buffer-create "*about*")
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (if (file-exists-p file)
+            (insert-file-contents file)
+          (insert (format "No %s yet." (abbreviate-file-name file))))
+        (unless (derived-mode-p 'org-mode)
+          (org-mode))
+        (goto-char (point-min)))
+      (setq buffer-read-only t)
+      (current-buffer))))
 
-(define-derived-mode pop/wm-mode special-mode "Window keys"
-  "The window keys cheat sheet."
-  (setq-local cursor-type nil
-              truncate-lines t))
-
-(defun pop/wm-buffer ()
-  (with-current-buffer (get-buffer-create "*window keys*")
-    (unless (derived-mode-p 'pop/wm-mode)
-      (pop/wm-mode))
-    (current-buffer)))
-
-(defun pop/wm-render ()
-  "Lay out the sheet to fit the popup's current width."
-  (let ((inhibit-read-only t))
-    (erase-buffer)
-    (pop/insert-keys "Window keys" pop/wm-help
-                     (window-body-width (frame-root-window pop/frame)))
-    (goto-char (point-min))))
-
-(pop/define wm
-  :match (derived-mode-p 'pop/wm-mode)
-  :open  #'pop/wm-buffer
-  :setup (pop/wm-render)
-  :keys  ("q" pop/hide)
-  :hints ("esc/q" "close"))
+(pop/define about
+  :match (equal (buffer-name) "*about*")
+  :open  #'pop/about-buffer
+  :setup (progn (pop/text-scale 0.8)
+                (visual-line-mode 1))   ; wrap long lines, don't cut them off
+  :keys  ("q" pop/hide))
 
 (provide 'ui)
