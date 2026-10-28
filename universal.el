@@ -7,10 +7,32 @@
   (interactive)
   (select-window (split-window-right)))
 
-(defun univ/zoom-reset ()
-  "Reset text scale in the current buffer."
+(declare-function pdf-view-enlarge "pdf-view")
+(declare-function pdf-view-shrink "pdf-view")
+(declare-function pdf-view-fit-width-to-window "pdf-view")
+(defvar pdf-view-resize-factor)
+
+;; Zoom: text size, or in a PDF, the page
+(defun univ/zoom-in ()
+  "Make the text bigger, or zoom into the PDF."
   (interactive)
-  (text-scale-set 0))
+  (if (derived-mode-p 'pdf-view-mode)
+      (pdf-view-enlarge pdf-view-resize-factor)
+    (text-scale-increase 1)))
+
+(defun univ/zoom-out ()
+  "Make the text smaller, or zoom out of the PDF."
+  (interactive)
+  (if (derived-mode-p 'pdf-view-mode)
+      (pdf-view-shrink pdf-view-resize-factor)
+    (text-scale-decrease 1)))
+
+(defun univ/zoom-reset ()
+  "Reset text scale in the current buffer, or fit the PDF to the width."
+  (interactive)
+  (if (derived-mode-p 'pdf-view-mode)
+      (pdf-view-fit-width-to-window)
+    (text-scale-set 0)))
 
 (defun univ/outside-minibuffer (command)
   "A binding for COMMAND that steps aside while completing.
@@ -146,8 +168,8 @@ From a popup, the popup closes and this acts on the main frame."
   "C-,"   (univ/outside-minibuffer #'univ/previous-file-buffer)
   "C-."   (univ/outside-minibuffer #'univ/next-file-buffer)
   ;; Zoom
-  "C-="   #'text-scale-increase
-  "C--"   #'text-scale-decrease
+  "C-="   #'univ/zoom-in
+  "C--"   #'univ/zoom-out
   "C-0"   #'univ/zoom-reset
   ;; Searching
   "M-s"   univ-search-map ; M-s M-f file, M-s M-d document, M-s M-p project

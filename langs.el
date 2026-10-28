@@ -232,25 +232,6 @@ The prompt starts with the last command, so C-<return> twice reruns it."
             "d"          pop/compile-set-directory
             "q"          pop/hide)
   :hints   ("C-RET" "compile"  "r" "rerun"  "d" "directory"  "n/p" "next/prev error"
-            "K" "stop"  "?" "keys")
-  :help    (("Run"
-             "C-RET" "enter a compile command"
-             "C-RET C-RET" "rerun, from the prompt"
-             "r" "rerun the last command"
-             "K" "stop the running compile"
-             "d" "change directory (sticks per project)")
-            ("Errors"
-             "n" "next error"
-             "p" "previous error"
-             "RET" "jump to error at point"
-             "M-n/M-p" "next/previous error")
-            ("Output"
-             "j/k" "move"
-             "gg/G" "top / bottom"
-             "/" "search")
-            ("Popup"
-             "?" "this sheet"
-             "esc/q" "close"
-             "C-x" "close and kill buffer")))
+            "K" "stop"  "?" "keys"))
 
 (provide 'langs)

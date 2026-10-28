@@ -249,53 +249,7 @@
             "q"          pop/hide)
   :hints   ("C-RET" "split"  "-" "up"  "m/u" "mark"
             "d/x" "delete"  "R" "rename"  "C" "copy"  "=" "file"  "+" "dir"
-            "?" "keys")
-  :help    (("Move"
-             "RET" "open file / enter dir"
-             "C-RET" "open in a split"
-             "-" "up a directory"
-             "j/k" "next / previous line"
-             "> / <" "next / previous dir"
-             "gg/G" "top / bottom"
-             "/" "search")
-            ("Mark"
-             "m" "mark"
-             "u" "unmark"
-             "U" "unmark all"
-             "t" "toggle marks"
-             "* /" "mark directories"
-             "% m" "mark by regexp")
-            ("Act on marked (or at point)"
-             "C" "copy"
-             "R" "rename / move"
-             "D" "delete now"
-             "d" "flag for deletion"
-             "x" "delete flagged"
-             "S" "symlink"
-             "M" "chmod"
-             "Z" "compress / uncompress"
-             "c" "compress to archive"
-             "!" "shell command"
-             "&" "async shell command")
-            ("Create"
-             "=" "new file"
-             "+" "new directory")
-            ("View & edit"
-             "(" "show / hide details"
-             "o" "toggle sort: name / date"
-             "g r" "refresh"
-             "I" "insert subdir below"
-             "Y" "copy file name"
-             "i" "edit names in place"
-             "C-c C-c" "...save edits"
-             "C-c C-k" "...discard edits")
-            ("Search marked files"
-             "A" "find regexp"
-             "Q" "find and replace")
-            ("Popup"
-             "?" "this sheet"
-             "esc/q" "close"
-             "C-x" "close and kill buffer")))
+            "?" "keys"))
 
 ;;; Ibuffer
 (use-package ibuffer
@@ -347,49 +301,7 @@
             "q"          pop/hide)
   :hints   ("C-RET" "split"  "m/u" "mark"  "d/x" "kill"
             "S" "save"  "TAB" "next group"
-            "?" "keys")
-  :help    (("Visit"
-             "RET" "show buffer"
-             "C-RET" "show in a split"
-             "TAB/S-TAB" "next / previous group"
-             "M-j" "jump to group"
-             "g r" "refresh")
-            ("Mark"
-             "m" "mark"
-             "u" "unmark"
-             "U" "unmark all"
-             "t" "toggle marks"
-             "* m" "mark modified"
-             "* u" "mark unsaved"
-             "." "mark old buffers")
-            ("Act on marked"
-             "d" "flag to kill"
-             "x" "kill flagged"
-             "D" "kill now"
-             "S" "save"
-             "V" "revert from disk"
-             "T" "toggle read-only"
-             "O" "occur (search lines)"
-             "Q" "query replace"
-             "=" "diff with file")
-            ("Filter"
-             "s n" "by name"
-             "s m" "by mode"
-             "s f" "by file name"
-             "s c" "by content"
-             "s p" "remove last filter"
-             "s /" "remove all filters")
-            ("Sort"
-             "," "cycle sort order"
-             "o v" "by recency"
-             "o a" "alphabetically"
-             "o s" "by size"
-             "o m" "by mode"
-             "o i" "reverse")
-            ("Popup"
-             "?" "this sheet"
-             "esc/q" "close"
-             "C-x" "close and kill buffer")))
+            "?" "keys"))
 
 ;;; Scratchpad
 
@@ -399,37 +311,6 @@
 (pop/define scratch
   :match (equal (buffer-name) "*scratch*")
   :open  #'get-scratch-buffer-create)
-
-;;; README
-
-;; README.org at the root of the git repo you're in (wherever .git is),
-;; created on first save if there isn't one.  It opens filling the frame,
-;; a normal buffer with its mode line; toggling again puts the old
-;; layout back.
-
-(defun my/readme-here ()
-  "The README.org buffer for the main buffer's git repo."
-  (let* ((dir (buffer-local-value 'default-directory (pop/main-buffer)))
-         (root (or (locate-dominating-file dir ".git")
-                   (user-error "Not in a git repo: no .git above %s"
-                               (abbreviate-file-name dir)))))
-    (find-file-noselect (expand-file-name "README.org" root))))
-
-(defun my/readme-toggle ()
-  "Open this repo's README.org filling the frame, or go back from it."
-  (interactive)
-  (let ((buf (my/readme-here)))
-    (when (eq (selected-frame) pop/frame)
-      (pop/hide))
-    (let ((saved (frame-parameter nil 'my/readme-return)))
-      (if (and saved (eq (current-buffer) buf))
-          (progn
-            (set-frame-parameter nil 'my/readme-return nil)
-            (set-window-configuration saved))
-        (set-frame-parameter nil 'my/readme-return (current-window-configuration))
-        (let ((ignore-window-parameters t)) ; side windows (treemacs) too
-          (delete-other-windows))
-        (switch-to-buffer buf)))))
 
 ;;; About
 

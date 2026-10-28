@@ -1,6 +1,4 @@
 * Keys
-These work everywhere (universal.el), over evil and most modes.
-
 ** Windows
 | C-h/j/k/l        | move left / down / up / right                 |
 | C-S-h/j/k/l      | swap with the window left / down / up / right |
@@ -10,16 +8,13 @@ These work everywhere (universal.el), over evil and most modes.
 | C-]              | side by side <-> stacked                      |
 | C-<left>/<right> | narrower / wider                              |
 | C-<up>/<down>    | taller / shorter                              |
-
 ** Buffers
 | C-, / C-. | previous / next file buffer                              |
 | C-t       | file tree on / off (C-RET in it opens a file in a split) |
-
 ** Zoom
 | C-= | bigger  |
 | C-- | smaller |
 | C-0 | reset   |
-
 ** Search
 | M-s M-f | find a file         |
 | M-s M-d | this document       |
@@ -28,19 +23,171 @@ These work everywhere (universal.el), over evil and most modes.
 | M-s M-p | text in the project |
 
 ** Mode line slots and popups
-| F1-F5 | the mode line slots, on / off     |
-| esc   | close a popup                     |
-| C-x   | close a popup and kill its buffer |
-| ?     | a popup's keys                    |
+| F1-F5 | the mode line slots, on / off (F5: pdf, in org and LaTeX) |
+| esc   | close a popup                                             |
+| C-x   | close a popup and kill its buffer                         |
+| ?     | a popup's keys                                            |
+
+* Org mode
+Keys are for normal state unless noted; C-c ones work in insert state too.
+** Writing
+| =*=            | a heading (=**= for a level below, and so on)        |
+| -            | a list item (+ also works; 1. for a numbered list) |
+| - [ ]        | a checkbox item                                    |
+| vertical bar | starts a table row; Tab tidies the table           |
+| #+title:     | the document's title, at the top                   |
+Inline: =*bold*=, =/italic/=, =_underline_=, ~=verbatim=~, =~code~=, =+strike+=.
+Links: =[[https://example.com][shown text]]= or =[[file:notes.org][a file]]=.
+** Folding
+| Tab   | open / close the heading under the cursor          |
+| S-Tab | cycle the whole file: headings, everything, folded |
+| C-c / | show only what matches (a "sparse tree")           |
+** Structure
+| M-RET            | new heading or list item (C-RET is split window)      |
+| M-<left/right>   | promote / demote the heading                          |
+| M-S-<left/right> | ...with its subheadings                               |
+| M-<up/down>      | move the heading, with everything under it, up / down |
+| C-c ^            | sort the headings or list under the cursor            |
+| C-c C-w          | move the heading under another one (refile)           |
+| C-c *            | turn a line into a heading (and back)                 |
+| C-c -            | turn lines into a list (and back)                     |
+** Tasks
+| C-c C-t           | TODO -> DONE -> nothing                         |
+| S-<left/right>    | the same, backwards / forwards                  |
+| C-c C-c           | tick a checkbox; tidy a table; run a code block |
+| C-c C-q           | set tags                                        |
+| C-c C-s / C-c C-d | schedule / set a deadline                       |
+| C-c .             | insert a date                                   |
+| S-<up/down>       | on a date: a day later / earlier                |
+** Links, code, export
+| C-c C-l | insert or edit a link                                         |
+| C-c C-o | open the link under the cursor                                |
+| C-c C-, | insert a block (src, quote, example...)                       |
+| C-c '   | edit a code block in its own language's mode; again to finish |
+| C-c C-e | export (HTML, PDF via LaTeX, Markdown...)                     |
+** Tables
+| Tab / S-Tab    | next / previous cell (tidies the table as it goes) |
+| RET (insert)   | next row                                           |
+| bar, dash, Tab | a horizontal rule                                  |
+| M-<left/right> | move the column                                    |
+| M-<up/down>    | move the row                                       |
+
+* LaTeX
+Two ways to write a typeset PDF, both with a live preview: an org file,
+which exports through LaTeX (write org; LaTeX only where you want it),
+or a plain .tex file.  Either way, Emacs shows exactly what you type:
+=\partial= stays =\partial=, =x^2= isn't raised.  The symbols are for the PDF.
+** Setup (once)
+#+begin_src sh
+sudo pacman -S texlive-basic texlive-latex texlive-latexrecommended \
+     texlive-latexextra texlive-fontsrecommended texlive-mathscience \
+     texlive-binextra texlive-plaingeneric poppler-glib
+#+end_src
+The first time a PDF opens, pdf-tools offers to build its helper
+(epdfinfo): say yes and let it finish.
+** Live preview (org and .tex)
+| F5 (pdf slot) | start: the PDF opens in a split on the right           |
+| save          | rebuild; the PDF reloads, staying on its page          |
+| F5 again      | stop, and close the PDF                                |
+| C-c C-e l p   | (org) a real export instead: name.pdf next to the file |
+Builds run in the background.  If LaTeX fails, the echo area shows its
+first error, and the full log is in the =*pdf build*= buffer.  An org
+file also gets a .tex next to it (as with export); the preview PDF itself
+lives in /tmp.
+** In the PDF
+| j / k           | scroll, on into the next / previous page  |
+| gg / G          | first page / go to a page                 |
+| C-= / C-- / C-0 | zoom in / out / back to fitting the width |
+| W / P           | fit the width / the whole page            |
+** LaTeX files
+A .tex file opens in LaTeX mode, with the pdf slot on F5.  To start one:
+1. =M-s M-f=, then a name ending in .tex, e.g. =notes.tex=.
+2. In insert state type =<doc= and press RET on it in the popup: a whole
+   article appears.  Type the title, Tab, the author, Tab, and you're in
+   the body.
+3. Save, press F5, and write; every save updates the PDF.
+** Snippets
+Type a snippet's name, which always starts with =<=, and pick it from the
+completion popup with RET.  Tab / S-Tab then jump between its blanks.
+The math ones work in org files too; the rest are for .tex files.
+| =<mk=           | inline math, =$ $=                          |
+| =<dm=           | centered math, =\[ \]=                      |
+| =<eq= / =<eqs=    | equation, numbered / unnumbered           |
+| =<al= / =<als=    | align (line up at =&=), numbered / not      |
+| =<cases=        | cases, two lines                          |
+| =<mat=          | a matrix (pmatrix)                        |
+| =<fr=           | =\frac{}{}=                                 |
+| =<pd=           | =\frac{\partial }{\partial }=               |
+| =<sum= / =<int=   | a sum / an integral, with limits          |
+| =<beg=          | any environment: its name is typed once   |
+| =<doc=          | (.tex) a whole article to start from      |
+| =<sec= / =<ssec=  | (.tex) section / subsection               |
+| =<item= / =<enum= | (.tex) bullet / numbered list             |
+| =<fig=          | (.tex) a figure with an image and caption |
+Add your own in =templates.eld=, in this directory.
+** Tutorial (org)
+1. Make a new file: =M-s M-f=, then a name ending in .org, e.g. =first.org=.
+2. Put this in it, and save.  (Copy it with =C-c '= on the block below:
+   the commas before the headings are only there to stop this README
+   treating them as its own headings.)
+3. Press F5.  The PDF appears beside it.
+4. Change something, say the integral's limits, and save: the PDF
+   follows.  Try a mistake, like =\fracc=, to see an error reported.
+
+#+begin_src org
+  ,#+title: A first document
+  ,#+author: Me
+  ,#+options: toc:nil
+  ,#+latex_header: \usepackage[margin=2.5cm]{geometry}
+
+  ,* Introduction
+  Org text becomes LaTeX: *bold*, /italic/, lists and tables all carry over.
+  Inline math goes between dollar signs, $E = mc^2$, or in \(a^2 + b^2 = c^2\).
+
+  ,* Display math
+  On a line of its own:
+  \[ \int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2} \]
+
+  Numbered, aligned equations are written as plain LaTeX:
+  \begin{align}
+    f(x) &= x^2 + 2x + 1 \\
+         &= (x + 1)^2
+  \end{align}
+
+  ,* A table
+  ,#+caption: Squares
+  | $n$ | $n^2$ |
+  |-----+-------|
+  |   1 |     1 |
+  |   2 |     4 |
+
+  ,* Raw LaTeX
+  ,#+begin_export latex
+  \begin{center}
+    \fbox{Anything org has no syntax for, LaTeX does.}
+  \end{center}
+  ,#+end_export
+#+end_src
+
+What the pieces do:
+| =#+title:=, =#+author:=       | the title block (=#+date:= too)               |
+| =#+options: toc:nil=        | no table of contents (=toc:t= for one)        |
+| =#+latex_header:=           | a line for the preamble, e.g. a =\usepackage= |
+| =#+latex_class:=            | the class: =article= (default), =report=, =book=  |
+| =*=, =**=, ...                | =\section=, =\subsection=, ...                  |
+| =$...$=, =\(...\)=            | inline math                                 |
+| =\[...\]=                   | display math                                |
+| =\begin{...}= ... =\end{...}= | any environment (align, equation...), as is |
+| =#+caption:=                | a caption on the next table or image        |
+| =[[file:plot.png]]=         | an image, as a figure                       |
+| =#+begin_export latex=      | raw LaTeX, passed through untouched         |
 
 * TODO
 ** General
-
 ** Magit
 1. Should be modeline accessible, opening in a full size buffer, not popup.
 2. Don't forget about forge, perhaps gh CLI tool is usable from magit.
-
-**  Org mode
+** Org mode
 1. Line wrapping at 80 chars.
 2. Icons and so forth.
 3. LaTeX configuration with live previews.

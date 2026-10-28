@@ -15,6 +15,8 @@
                    completion   ; minibuffer, M-x, autocompletion
                    ui           ; looks, windows, dired/ibuffer, popups
                    langs        ; indentation, C, eglot, compiling
+                   orgmode      ; org looks and keys
+                   latexmode    ; LaTeX, snippets, live PDF preview
                    popup        ; the popup framework
                    universal    ; keys that override everything
                    modeline))   ; the mode line, with F-key slots
