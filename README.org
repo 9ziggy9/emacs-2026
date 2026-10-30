@@ -125,63 +125,6 @@ The math ones work in org files too; the rest are for .tex files.
 | =<item= / =<enum= | (.tex) bullet / numbered list             |
 | =<fig=          | (.tex) a figure with an image and caption |
 Add your own in =templates.eld=, in this directory.
-** Tutorial (org)
-1. Make a new file: =M-s M-f=, then a name ending in .org, e.g. =first.org=.
-2. Put this in it, and save.  (Copy it with =C-c '= on the block below:
-   the commas before the headings are only there to stop this README
-   treating them as its own headings.)
-3. Press F5.  The PDF appears beside it.
-4. Change something, say the integral's limits, and save: the PDF
-   follows.  Try a mistake, like =\fracc=, to see an error reported.
-
-#+begin_src org
-  ,#+title: A first document
-  ,#+author: Me
-  ,#+options: toc:nil
-  ,#+latex_header: \usepackage[margin=2.5cm]{geometry}
-
-  ,* Introduction
-  Org text becomes LaTeX: *bold*, /italic/, lists and tables all carry over.
-  Inline math goes between dollar signs, $E = mc^2$, or in \(a^2 + b^2 = c^2\).
-
-  ,* Display math
-  On a line of its own:
-  \[ \int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2} \]
-
-  Numbered, aligned equations are written as plain LaTeX:
-  \begin{align}
-    f(x) &= x^2 + 2x + 1 \\
-         &= (x + 1)^2
-  \end{align}
-
-  ,* A table
-  ,#+caption: Squares
-  | $n$ | $n^2$ |
-  |-----+-------|
-  |   1 |     1 |
-  |   2 |     4 |
-
-  ,* Raw LaTeX
-  ,#+begin_export latex
-  \begin{center}
-    \fbox{Anything org has no syntax for, LaTeX does.}
-  \end{center}
-  ,#+end_export
-#+end_src
-
-What the pieces do:
-| =#+title:=, =#+author:=       | the title block (=#+date:= too)               |
-| =#+options: toc:nil=        | no table of contents (=toc:t= for one)        |
-| =#+latex_header:=           | a line for the preamble, e.g. a =\usepackage= |
-| =#+latex_class:=            | the class: =article= (default), =report=, =book=  |
-| =*=, =**=, ...                | =\section=, =\subsection=, ...                  |
-| =$...$=, =\(...\)=            | inline math                                 |
-| =\[...\]=                   | display math                                |
-| =\begin{...}= ... =\end{...}= | any environment (align, equation...), as is |
-| =#+caption:=                | a caption on the next table or image        |
-| =[[file:plot.png]]=         | an image, as a figure                       |
-| =#+begin_export latex=      | raw LaTeX, passed through untouched         |
-
 * TODO
 ** General
 ** Magit
