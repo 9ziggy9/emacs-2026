@@ -17,16 +17,18 @@
 ;;; Theme
 (use-package railscasts-reloaded-theme :defer t)
 
-;; Selections (visual mode) are shaded darker than the background, not
-;; lighter; redone after each theme, since themes set the region face
-(defun my/darken-region (&rest _)
-  (require 'color)
-  (let ((bg (face-background 'default nil t)))
-    (when (color-defined-p bg)
-      (set-face-background 'region (color-darken-name bg 7)))))
+;; Selections (visual mode) and the highlighted line are dark text on muted
+;; amber, in every theme; redone after each theme, since themes set these faces
+(defun my/selection-faces (&rest _)
+  (dolist (face '(region hl-line))
+    (when (facep face)
+      (set-face-attribute face nil
+                          :background "#c9a66b" :foreground "#1c1c1c"
+                          :distant-foreground 'unspecified))))
 
-(my/darken-region)
-(add-hook 'enable-theme-functions #'my/darken-region)
+(my/selection-faces)
+(add-hook 'enable-theme-functions #'my/selection-faces)
+(with-eval-after-load 'hl-line (my/selection-faces))
 
 (use-package base16-theme :defer t)     ; ~360 schemes: base16-<name>
 (use-package ef-themes :defer t)        ; ~34 polished light/dark themes
