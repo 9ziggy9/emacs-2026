@@ -23,10 +23,36 @@
 | M-s M-p | text in the project |
 
 ** Mode line slots and popups
-| F1-F5 | the mode line slots, on / off (F5: pdf, in org and LaTeX) |
+| F1-F6 | the mode line slots, on / off (F6: pdf, in org and LaTeX) |
 | esc   | close a popup                                             |
 | C-x   | close a popup and kill its buffer                         |
 | ?     | a popup's keys                                            |
+
+* Git
+F4 (git slot) opens magit's status for the current repo, taking the
+whole frame; F4 again (or q) puts your windows back.  Outside a repo it
+offers to make one.  Keys are vim-style (evil-collection).
+** Status buffer
+| ? or H    | every magit command, in a menu                |
+| j / k     | move; Tab opens / closes a section            |
+| s / u     | stage / unstage the file or hunk at the cursor |
+| x         | discard the change at the cursor              |
+| c c       | commit: write the message, C-c C-c to finish  |
+| p p / F p | push / pull                                   |
+| b b / b c | switch branch / new branch                    |
+| L l       | log                                           |
+| q         | close                                         |
+** GitHub (gh)
+@ in magit (or @ in the ? menu) opens the gh menu.  Needs =gh auth login= once.
+| c | create the repo on GitHub as origin, and push (asks name, visibility) |
+| C | clone a GitHub repo, then open it in magit                          |
+| r | list your repos                                                     |
+| b | open this repo in the browser                                       |
+| p | create a pull request for this branch (browser)                     |
+| v | this branch's pull request (browser)                                |
+| l | list pull requests                                                  |
+| i / I | create an issue (browser) / list issues                         |
+| o | the gh output popup                                                 |
 
 * Org mode
 Keys are for normal state unless noted; C-c ones work in insert state too.
@@ -86,9 +112,9 @@ sudo pacman -S texlive-basic texlive-latex texlive-latexrecommended \
 The first time a PDF opens, pdf-tools offers to build its helper
 (epdfinfo): say yes and let it finish.
 ** Live preview (org and .tex)
-| F5 (pdf slot) | start: the PDF opens in a split on the right           |
+| F6 (pdf slot) | start: the PDF opens in a split on the right           |
 | save          | rebuild; the PDF reloads, staying on its page          |
-| F5 again      | stop, and close the PDF                                |
+| F6 again      | stop, and close the PDF                                |
 | C-c C-e l p   | (org) a real export instead: name.pdf next to the file |
 Builds run in the background.  If LaTeX fails, the echo area shows its
 first error, and the full log is in the =*pdf build*= buffer.  An org
@@ -100,12 +126,12 @@ lives in /tmp.
 | C-= / C-- / C-0 | zoom in / out / back to fitting the width |
 | W / P           | fit the width / the whole page            |
 ** LaTeX files
-A .tex file opens in LaTeX mode, with the pdf slot on F5.  To start one:
+A .tex file opens in LaTeX mode, with the pdf slot on F6.  To start one:
 1. =M-s M-f=, then a name ending in .tex, e.g. =notes.tex=.
 2. In insert state type =<doc= and press RET on it in the popup: a whole
    article appears.  Type the title, Tab, the author, Tab, and you're in
    the body.
-3. Save, press F5, and write; every save updates the PDF.
+3. Save, press F6, and write; every save updates the PDF.
 ** Snippets
 Type a snippet's name, which always starts with =<=, and pick it from the
 completion popup with RET.  Tab / S-Tab then jump between its blanks.
@@ -127,9 +153,6 @@ The math ones work in org files too; the rest are for .tex files.
 Add your own in =templates.eld=, in this directory.
 * TODO
 ** General
-** Magit
-1. Should be modeline accessible, opening in a full size buffer, not popup.
-2. Don't forget about forge, perhaps gh CLI tool is usable from magit.
 ** Org mode
 1. Line wrapping at 80 chars.
 2. Icons and so forth.

@@ -16,6 +16,7 @@
   '(("compile" . pop/compile-toggle)
     ("dired"   . pop/dired-toggle)
     ("ibuffer" . pop/ibuffer-toggle)
+    ("git"     . my/git-toggle)
     ("about"   . pop/about-toggle))
   "Slots (LABEL . COMMAND) for modes without their own; the first is F1.
 A nil entry leaves that slot empty.")

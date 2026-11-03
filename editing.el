@@ -139,7 +139,7 @@
 (use-package evil-collection
   :after evil
   :config
-  (setq evil-collection-mode-list '(dired ibuffer corfu helpful pdf))
+  (setq evil-collection-mode-list '(dired ibuffer corfu helpful pdf magit))
   (evil-collection-init))
 
 (provide 'editing)
