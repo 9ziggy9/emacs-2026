@@ -54,6 +54,16 @@ offers to make one.  Keys are vim-style (evil-collection).
 | i / I | create an issue (browser) / list issues                         |
 | o | the gh output popup                                                 |
 
+* C
+Macro bodies are highlighted like any other code.  In a macro, RET (and
+o / O) continues it: the new line gets a backslash lined up with the one
+above, and backslashes stay lined up as you type.  RET on the last line
+(the one without a backslash) ends the macro.
+** Macros
+| C-c '   | edit the #define under the cursor without backslashes (not on one: start a new one) |
+| C-c '   | (in that buffer) put it back, backslashes lined up; also C-c C-c                     |
+| C-c C-k | (in that buffer) cancel                                                              |
+
 * Org mode
 Keys are for normal state unless noted; C-c ones work in insert state too.
 ** Writing

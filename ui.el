@@ -69,6 +69,31 @@
   :custom
   (window-combination-resize t))
 
+;; Borders between windows, the background with a quarter of the text
+;; color mixed in, so they show in every theme (some, like the doom ones,
+;; hide the default border); redone after each theme
+(setq window-divider-default-places t   ; between side-by-side and stacked
+      window-divider-default-right-width 2
+      window-divider-default-bottom-width 2)
+(window-divider-mode 1)
+
+(defun my/divider-faces (&rest _)
+  "Color the window borders from the current theme's colors."
+  (let ((bg (face-background 'default nil t))
+        (fg (face-foreground 'default nil t)))
+    (when (and (color-defined-p bg) (color-defined-p fg))
+      (let ((line (apply #'color-rgb-to-hex
+                         (append (cl-mapcar (lambda (b f) (+ b (* 0.25 (- f b))))
+                                            (color-name-to-rgb bg)
+                                            (color-name-to-rgb fg))
+                                 '(2)))))
+        (dolist (face '(window-divider window-divider-first-pixel
+                        window-divider-last-pixel vertical-border))
+          (set-face-attribute face nil :foreground line :background line))))))
+
+(my/divider-faces)
+(add-hook 'enable-theme-functions #'my/divider-faces)
+
 ;;; Key hints: pause after a prefix to see what can follow it
 (use-package which-key
   :ensure nil                          ; built in since Emacs 30
