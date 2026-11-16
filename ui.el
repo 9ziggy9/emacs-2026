@@ -6,6 +6,9 @@
 (setq display-line-numbers-type 'relative)
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
+;; A cursor only in the selected window, none in the other splits
+(setq-default cursor-in-non-selected-windows nil)
+
 ;; Echo area text at 60% of the buffer text size
 (dolist (buf '(" *Echo Area 0*" " *Echo Area 1*"))
   (with-current-buffer (get-buffer-create buf)
@@ -28,9 +31,23 @@
 
 (my/selection-faces)
 (add-hook 'enable-theme-functions #'my/selection-faces)
+
+;; Line numbers a little smaller than the text; redone after each theme,
+;; since themes set these faces
+(defun my/line-number-faces (&rest _)
+  (dolist (face '(line-number line-number-current-line))
+    (set-face-attribute face nil :height 0.85)))
+
+(my/line-number-faces)
+(add-hook 'enable-theme-functions #'my/line-number-faces)
 (with-eval-after-load 'hl-line (my/selection-faces))
 
-(use-package base16-theme :defer t)     ; ~360 schemes: base16-<name>
+(use-package base16-theme               ; ~360 schemes: base16-<name>
+  :defer t
+  :init
+  ;; The line-number margin and fringe on the normal background, not a
+  ;; separate shade (set before the saved theme loads below)
+  (setq base16-theme-distinct-fringe-background nil))
 (use-package ef-themes :defer t)        ; ~34 polished light/dark themes
 (use-package doom-themes :defer t)      ; ~60 themes: doom-<name>
 

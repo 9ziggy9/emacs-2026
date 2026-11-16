@@ -5,7 +5,7 @@
       '((menu-bar-lines . 0)
         (tool-bar-lines . 0)
         (vertical-scroll-bars)
-        (font . "Iosevka Nerd Font-14")))
+        (font . "Iosevka Nerd Font-12")))
 (setq frame-inhibit-implied-resize t)
 
 ;; New frames open in the theme's colors instead of flashing white until the
