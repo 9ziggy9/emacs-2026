@@ -133,6 +133,83 @@ From a popup, the popup closes and this acts on the main frame."
   (interactive)
   (shrink-window 2))
 
+;; Tabs, like kitty and qutebrowser: M-1..M-9 go to tab N, or open a new
+;; tab at the end with dired in the current buffer's directory if there is
+;; no tab N (like i3's workspace keys); M-w closes the tab.  From a popup,
+;; the popup closes and the key acts on the main frame.
+(setq tab-bar-show 1                    ; the tab bar shows once there are 2+ tabs
+      tab-bar-new-tab-to 'rightmost     ; new tabs at the end, so M-N counts from left
+      tab-bar-tab-hints t               ; numbered tabs
+      tab-bar-close-button-show nil
+      tab-bar-new-button-show nil)
+
+;; The tab bar looks like kitty's slanted powerline tabs, slim: every tab on
+;; a muted shade of the theme, the selected one told apart by its amber bold
+;; text; tabs are divided by a thin ╱ and the last ends in a slant ().
+;; Recolored with every theme.
+(require 'color)
+
+(defun univ/mix (a b frac)
+  "Color A with FRAC of color B mixed in."
+  (apply #'color-rgb-to-hex
+         (append (cl-mapcar (lambda (x y) (+ x (* frac (- y x))))
+                            (color-name-to-rgb a) (color-name-to-rgb b))
+                 '(2))))
+
+(defun univ/tab-name (tab i)
+  "TAB, the I-th tab, drawn like a kitty powerline tab."
+  (let* ((bar (face-background 'default nil t))
+         (fg (face-foreground 'default nil t))
+         (bg (univ/mix bar fg 0.12))
+         (current (eq (car tab) 'current-tab))
+         (last (= i (length (funcall tab-bar-tabs-function))))  ; I counts from 1
+         (name (truncate-string-to-width (alist-get 'name tab) 30 nil nil "…")))
+    (concat
+     (propertize (format " %d %s " i name)
+                 'face (if current
+                           `(:background ,bg :foreground "#c9a66b" :weight bold)
+                         `(:background ,bg :foreground ,(univ/mix bar fg 0.6))))
+     (if last
+         (propertize "" 'face `(:background ,bar :foreground ,bg))
+       (propertize "╱" 'face `(:background ,bg :foreground ,bar))))))
+
+(defun univ/tab-bar-face (&rest _)
+  "The bar behind the tabs: the theme's background, a bit smaller than text."
+  (set-face-attribute 'tab-bar nil
+                      :background (face-background 'default nil t)
+                      :foreground (face-foreground 'default nil t)
+                      :box nil :height 0.6 :inherit 'unspecified))
+
+(setq tab-bar-format '(tab-bar-format-tabs) ; just the tabs, no buttons
+      tab-bar-separator ""                  ; univ/tab-name draws its own
+      tab-bar-auto-width nil                ; tabs as wide as their names
+      tab-bar-tab-name-format-function #'univ/tab-name)
+(univ/tab-bar-face)
+(add-hook 'enable-theme-functions #'univ/tab-bar-face)
+
+(defun univ/leave-popup ()
+  "If a popup is selected, hide it, so tab keys act on the main frame."
+  (when (and (boundp 'pop/frame) (eq (selected-frame) pop/frame))
+    (pop/hide)))
+
+(defun univ/tab-select-or-new (n)
+  "Go to tab N, or open a new tab with dired in the current directory."
+  (univ/leave-popup)
+  (if (<= n (length (tab-bar-tabs)))
+      (tab-bar-select-tab n)
+    (let ((dir (with-current-buffer (window-buffer (selected-window))
+                 default-directory)))
+      (tab-bar-new-tab)
+      (dired dir))))
+
+(defun univ/tab-close ()
+  "Close the current tab."
+  (interactive)
+  (univ/leave-popup)
+  (if (cdr (tab-bar-tabs))
+      (tab-bar-close-tab)
+    (message "Only one tab")))
+
 (defvar-keymap univ-search-map
   :doc "M-s: search."
   "M-f" #'find-file       ; a file, anywhere in the project
@@ -185,6 +262,16 @@ From a popup, the popup closes and this acts on the main frame."
   :keymap univ-keys-map)
 
 (univ-keys-mode 1)
+
+;; Tab keys (above), set on the map here so reloading this file updates them
+(dotimes (i 9)
+  (let ((n (1+ i)))
+    (keymap-set univ-keys-map (format "M-%d" n)
+                (univ/outside-minibuffer
+                 (lambda () (interactive) (univ/tab-select-or-new n))))))
+(keymap-set univ-keys-map "M-w" (univ/outside-minibuffer #'univ/tab-close))
+;; Jump hints, like qutebrowser's Alt+Space (avy, set up in editing.el)
+(keymap-set univ-keys-map "M-SPC" (univ/outside-minibuffer #'avy-goto-word-0))
 
 ;; These keys must come before evil's in `emulation-mode-map-alists'.
 ;; Evil puts its own in front the first time it's turned on in a

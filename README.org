@@ -11,6 +11,11 @@
 ** Buffers
 | C-, / C-. | previous / next file buffer                              |
 | C-t       | file tree on / off (C-RET in it opens a file in a split) |
+** Tabs
+| M-1 ... M-9 | go to tab N, or open a new one with dired here |
+| M-w         | close tab (its buffers stay open)              |
+** Jump
+| M-SPC | label every word in every window; type a label to jump there |
 ** Zoom
 | C-= | bigger  |
 | C-- | smaller |
